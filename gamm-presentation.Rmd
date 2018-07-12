@@ -1,0 +1,113 @@
+---
+title: "An introduction to GAM(M)s"
+author: "Stefano Coretta"
+date: "12/07/2018"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+theme_set(theme_minimal())
+```
+
+```{r data}
+set.seed(8788)
+x <- seq(0,100,1)
+y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
+x_1 <- seq(0, 100, 1)
+y_1 <- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
+
+sim_traj <- tibble(
+  x = c(x, x_1),
+  y = c(y, y_1),
+  g = rep(c("a", "b"), each = 101)
+)
+
+sim_traj_a <- filter(sim_traj, g == "a")
+```
+
+## Linear models
+
+Some (fairly) linear data...
+
+```{r plot-data}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point()
+```
+
+## Linear models
+
+* A general formula: $y = \beta_0 + \beta_1x$
+    * $y$ is the **outcome variable**
+    * $x$ is the **predictor**
+    * $\beta_0$ is the **intercept**
+    * $\beta_1$ is the **slope**
+
+* We know $x$ and $y$
+    * we need to estimate $\beta_0$, $\beta_1$
+
+* We can add more predictors
+    * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
+
+## Linear models
+
+* code in `R`
+
+```{r lm, eval=FALSE, echo=TRUE}
+lm(y ~ x, data = sim_traj)
+```
+
+* estimated intercept and slope
+
+\centering
+
+```{r plot-lm, out.height="150pt"}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+## Linear models
+
+Is it linear?
+
+```{r plot-lm-loess, message=FALSE}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", colour = "red") +
+  geom_smooth(linetype = "dashed")
+```
+
+## Linear models with non-linear data
+
+How to account for non-linearity in a linear model?
+
+* Use **higher-degree polynomials**
+    * quadratic: $y = \beta_0 + \beta_1x + \beta_2x^2$
+    * cubic: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3$
+    * $n$th: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n$
+
+## Linear models with non-linear data
+
+```{r}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
+```
+
+## Linear models with non-linear data
+
+```{r}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3))
+```
+
+## Linear models with non-linear data
+
+```{r}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10))
+```
