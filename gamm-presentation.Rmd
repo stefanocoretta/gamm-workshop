@@ -3,6 +3,8 @@ title: "An introduction to GAM(M)s"
 author: "Stefano Coretta"
 date: "12/07/2018"
 output: beamer_presentation
+header-includes:
+- \linespread{1.5}
 ---
 
 ```{r setup, include=FALSE}
