@@ -31,6 +31,40 @@ sim_traj_a <- filter(sim_traj, g == "a")
 
 ## Linear models
 
+\centering \Huge
+
+Time travel...
+
+## Linear models
+
+\centering \Huge
+
+$y = 3 + 2x$
+
+\large
+
+where $x = (2, 4, 5, 8, 10, 23, 36)$
+
+## Linear models
+
+```{r}
+line <- tibble(
+  x = c(2, 4, 5, 8, 10, 23, 36),
+  y = 3 + 2 * x
+)
+ggplot(line, aes(x, y)) +
+  geom_point()
+```
+
+```{r}
+ggplot(line, aes(x, y)) +
+  geom_point(colour = "gray") +
+  geom_line(colour = "red")
+```
+
+
+## Linear models
+
 Some (fairly) linear data...
 
 ```{r plot-data}
@@ -40,11 +74,10 @@ ggplot(sim_traj_a, aes(x, y)) +
 
 ## Linear models
 
-* A general formula: $y = \beta_0 + \beta_1x$
-    * $y$ is the **outcome variable**
-    * $x$ is the **predictor**
+* A general formula: $y = \beta_0 + \beta_1x + \epsilon$
     * $\beta_0$ is the **intercept**
     * $\beta_1$ is the **slope**
+    * $\epsilon$ is the **error term**
 
 * We know $x$ and $y$
     * we need to estimate $\beta_0$, $\beta_1$
