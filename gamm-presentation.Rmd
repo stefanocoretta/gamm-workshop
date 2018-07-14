@@ -96,7 +96,7 @@ ggplot(line, aes(x, y)) +
     * $\beta_1$ is the **slope**
 
 * We know $x$ and $y$
-    * we need to estimate $\beta_0$, $\beta_1$
+    * we need to estimate $\beta_0$, $\beta_1$ = $\hat{\beta_0}, \hat{\beta_1}$
 
 * We can add more predictors
     * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
@@ -180,3 +180,33 @@ ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10))
 ```
+
+## Linear models with non-linear data
+
+Genrealised Additive Models
+
+* $y = f(x) + \epsilon$
+
+* $f(x)$ = some function of $x$
+
+## Basis functions
+
+* polynomials are a type of basis functions
+    * linear regression is the simplest polynomial (degree 1)
+
+* **splines** are another type
+    * there are several kinds of splines
+    * each with their own basis functions
+
+## Generalised additive models
+
+* LMs have parametric terms
+    * like $\beta{}x$
+
+* GAMs add smooth terms (or smooths)
+    * `s()` = $f(x)$
+
+```{r eval=FALSE}
+gam(y ~ s(x), data)
+```
+
