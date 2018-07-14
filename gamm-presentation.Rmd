@@ -53,31 +53,47 @@ line <- tibble(
   y = 3 + 2 * x
 )
 ggplot(line, aes(x, y)) +
-  geom_point()
+  geom_point() +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
 ```
+
+## Linear models
 
 ```{r}
 ggplot(line, aes(x, y)) +
   geom_point(colour = "gray") +
-  geom_line(colour = "red")
-```
-
-
-## Linear models
-
-Some (fairly) linear data...
-
-```{r plot-data}
-ggplot(sim_traj_a, aes(x, y)) +
-  geom_point()
+  geom_line(colour = "red") +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
 ```
 
 ## Linear models
 
-* A general formula: $y = \beta_0 + \beta_1x + \epsilon$
+* In science, we have $x$ and $y$...
+
+* for example, vowel duration and VOT
+
+## Linear models
+
+```{r}
+set.seed(4321)
+x <- 1:10
+y <- (1 + 1.5 * x) + rnorm(10, 0, 1)
+
+line <- tibble(
+  x = x,
+  y = y
+)
+ggplot(line, aes(x, y)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == "?" + "?" * italic(x)))
+```
+
+## Linear models
+
+* The formula: $y = \beta_0 + \beta_1x$
     * $\beta_0$ is the **intercept**
     * $\beta_1$ is the **slope**
-    * $\epsilon$ is the **error term**
 
 * We know $x$ and $y$
     * we need to estimate $\beta_0$, $\beta_1$
@@ -85,33 +101,51 @@ ggplot(sim_traj_a, aes(x, y)) +
 * We can add more predictors
     * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
 
-## Linear models
-
 * code in `R`
 
 ```{r lm, eval=FALSE, echo=TRUE}
-lm(y ~ x, data = sim_traj)
+lm(y ~ x, data)
 ```
 
-* estimated intercept and slope
+## Linear models
 
-\centering
+```{r}
+ggplot(line, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x)))
+```
+
+## Linear models
+
+```{r}
+m <- lm(y ~ x)
+yhat <- m$fitted.values
+diff <- y - yhat  
+ggplot(line, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x)))
+```
+
+## Linear models with non-linear data
+
+```{r plot-data}
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_point() +
+  labs(title = "Some non-linear data")
+```
+
+## Linear models with non-linear data
 
 ```{r plot-lm, out.height="150pt"}
 ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
-  geom_smooth(method = "lm")
-```
-
-## Linear models
-
-Is it linear?
-
-```{r plot-lm-loess, message=FALSE}
-ggplot(sim_traj_a, aes(x, y)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", colour = "red") +
-  geom_smooth(linetype = "dashed")
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
 ```
 
 ## Linear models with non-linear data
