@@ -2,7 +2,10 @@
 title: "An introduction to GAM(M)s"
 author: "Stefano Coretta"
 date: "12/07/2018"
-output: beamer_presentation
+output:
+  beamer_presentation:
+    includes:
+      in_header: header.tex
 header-includes:
 - \linespread{1.5}
 ---
@@ -47,7 +50,7 @@ where $x = (2, 4, 5, 8, 10, 23, 36)$
 
 ## Linear models
 
-```{r}
+```{r homework}
 line <- tibble(
   x = c(2, 4, 5, 8, 10, 23, 36),
   y = 3 + 2 * x
@@ -59,7 +62,7 @@ ggplot(line, aes(x, y)) +
 
 ## Linear models
 
-```{r}
+```{r line}
 ggplot(line, aes(x, y)) +
   geom_point(colour = "gray") +
   geom_line(colour = "red") +
@@ -74,7 +77,7 @@ ggplot(line, aes(x, y)) +
 
 ## Linear models
 
-```{r}
+```{r sampled}
 set.seed(4321)
 x <- 1:10
 y <- (1 + 1.5 * x) + rnorm(10, 0, 1)
@@ -101,25 +104,21 @@ ggplot(line, aes(x, y)) +
 * We can add more predictors
     * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
 
-* code in `R`
-
-```{r lm, eval=FALSE, echo=TRUE}
-lm(y ~ x, data)
-```
+* `lm(y ~ x, data)` ('$y$ as a function of $x$')
 
 ## Linear models
 
-```{r}
+```{r lm-plot}
 ggplot(line, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x)))
+  labs(title = bquote({italic(y) == beta[0] + beta[1] * italic(x)} == 1 + 1.5 * italic(x)))
 ```
 
 ## Linear models
 
-```{r}
+```{r error}
 m <- lm(y ~ x)
 yhat <- m$fitted.values
 diff <- y - yhat  
@@ -128,10 +127,10 @@ ggplot(line, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x)))
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + epsilon))
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
 
 ```{r plot-data}
 ggplot(sim_traj_a, aes(x, y)) +
@@ -139,16 +138,29 @@ ggplot(sim_traj_a, aes(x, y)) +
   labs(title = "Some non-linear data")
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
 
-```{r plot-lm, out.height="150pt"}
+```{r plot-lm}
 ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Some non-linear data")
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
+
+```{r error-2}
+m <- lm(y ~ x, data = sim_traj_a)
+yhat <- m$fitted.values
+diff <- sim_traj_a$y - yhat  
+ggplot(sim_traj_a, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
+## LM with non-linear data
 
 How to account for non-linearity in a linear model?
 
@@ -157,56 +169,70 @@ How to account for non-linearity in a linear model?
     * cubic: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3$
     * $n$th: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n$
 
-## Linear models with non-linear data
+## LM with non-linear data
 
-```{r}
+```{r 2-poly}
 ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
 
-```{r}
+```{r 3-poly}
 ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3))
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
 
-```{r}
+```{r 10-poly}
 ggplot(sim_traj_a, aes(x, y)) +
   geom_point() +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10))
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
 ```
 
-## Linear models with non-linear data
+## LM with non-linear data
 
-Genrealised Additive Models
-
-* $y = f(x) + \epsilon$
-
-* $f(x)$ = some function of $x$
-
-## Basis functions
-
-* polynomials are a type of basis functions
-    * linear regression is the simplest polynomial (degree 1)
-
-* **splines** are another type
-    * there are several kinds of splines
-    * each with their own basis functions
+```{r 10-poly-2, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(colour = "red", size = 2) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+```
 
 ## Generalised additive models
 
-* LMs have parametric terms
-    * like $\beta{}x$
+* **G**enrealised **A**dditive **M**odel**s**
 
-* GAMs add smooth terms (or smooths)
-    * `s()` = $f(x)$
+* $y = f(x) + \epsilon$
+    * $f(x)$ = 'some function of $x$' (or *smooth function*)
 
-```{r eval=FALSE}
-gam(y ~ s(x), data)
-```
+## Smooth terms
+
+* LMs have **parametric terms**
+    * $\beta_nx_n$ (`x` in `R`)
+    * linear effects
+
+* GAMs add (non-parametric) **smooth terms** (or simply smooths)
+    * $f(x)$, `s(x)` in `R`
+    * non-linear effects
+
+* `gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
+
+## Basis functions
+
+* polynomials are a type of basis function
+    * linear regression is the simplest polynomial (degree 1)
+
+* **smoothing splines** are another type
+    * there are several kinds of splines
+    * each with their own basis functions
+
+
 
