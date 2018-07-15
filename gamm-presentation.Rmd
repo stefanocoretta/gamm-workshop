@@ -6,8 +6,7 @@ output:
   beamer_presentation:
     includes:
       in_header: header.tex
-header-includes:
-- \linespread{1.5}
+    keep_tex: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -219,20 +218,23 @@ ggplot(line, aes(x, y)) +
     * $\beta_nx_n$ (`x` in `R`)
     * linear effects
 
-* GAMs add (non-parametric) **smooth terms** (or simply smooths)
+* GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers)
     * $f(x)$, `s(x)` in `R`
     * non-linear effects
 
 * `gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
 
-## Basis functions
+## Smoothing splines, basis, basis functions
 
-* polynomials are a type of basis function
-    * linear regression is the simplest polynomial (degree 1)
+* smooths in GAMs are **smoothing splines**
+    * splines are defined piecewise with polynomials
+    * the piecewise combination of polynomials is called the **basis**
+    * the basis is composed of **basis functions** (the polynomials)
 
-* **smoothing splines** are another type
-    * there are several kinds of splines
+* there are **several kinds** of splines
     * each with their own basis functions
+    * thin plate regression splines
+    * cubic regression splines
 
 
 
