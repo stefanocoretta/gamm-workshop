@@ -6,7 +6,6 @@ output:
   beamer_presentation:
     includes:
       in_header: header.tex
-    keep_tex: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -227,9 +226,14 @@ ggplot(line, aes(x, y)) +
 ## Smoothing splines, basis, basis functions
 
 * smooths in GAMs are **smoothing splines**
-    * splines are defined piecewise with polynomials
-    * the piecewise combination of polynomials is called the **basis**
+    * splines are defined piecewise with a set of polynomials
+
+* the set of polynomials is called a **basis**
     * the basis is composed of **basis functions** (the polynomials)
+
+* a spline is the sum of the products of each basis function and its coefficient
+
+## Smoothing splines
 
 * there are **several kinds** of splines
     * each with their own basis functions
