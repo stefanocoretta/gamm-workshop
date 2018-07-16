@@ -245,7 +245,7 @@ ggplot(line, aes(x, y)) +
 
 ## Basis functions
 
-```{r}
+```{r basis}
 par(mfrow = c(1, 2))
 
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
@@ -256,7 +256,7 @@ X <- predict(
   type = "lpmatrix"
 )[,2:10]
 
-plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-1, 2), xlab = "x", ylab = "y")
+plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-2, 3), xlab = "x", ylab = "y")
 for (i in 1:ncol(X)) {
   lines(sim_nl_a$x, X[, i], col = i, lw = 1)
 }
@@ -281,6 +281,14 @@ lines(
 )
 ```
 
+## Smoothing parameter
+
+* 'wiggliness' is related to number of basis functions
+    * more basis functions, more wiggliness (less smoothing)
+
+* the **smoothing parameter** penalises wiggliness
+    * high values = less wiggliness (more smoothing)
+    * estimated from the data
 
 ## Smoothing splines
 
@@ -293,7 +301,7 @@ lines(
 
 ## A simple GAM
 
-```{r echo = TRUE, simple-10}
+```{r simple-10, echo = TRUE}
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
 summary(simple)
 ```
@@ -313,14 +321,14 @@ plot(simple)
 
 ## Comparing levels
 
-```{r}
+```{r nl-plot}
 ggplot(sim_nl, aes(x, y, colour = group)) +
   geom_point()
 ```
 
 ## Comparing levels
 
-```{r message=FALSE}
+```{r nl-smooth, message=FALSE}
 ggplot(sim_nl, aes(x, y, colour = group)) +
   geom_point() +
   geom_smooth(se = FALSE)
@@ -330,7 +338,7 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
 
 * ordered `by`-variables
 
-```{r echo = TRUE, eval=FALSE}
+```{r by-variables, echo = TRUE, eval=FALSE}
 compare <- gam(
   y ~
     group +
