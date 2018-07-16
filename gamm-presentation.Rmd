@@ -243,7 +243,44 @@ ggplot(line, aes(x, y)) +
 
 * a spline is the sum of the products of each basis function and its coefficient
 
-<!-- Show basis functions -->
+## Basis functions
+
+```{r}
+par(mfrow = c(1, 2))
+
+simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+
+X <- predict(
+  simple,
+  newdata = data.frame(x = sim_nl_a$x),
+  type = "lpmatrix"
+)[,2:10]
+
+plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-1, 2), xlab = "x", ylab = "y")
+for (i in 1:ncol(X)) {
+  lines(sim_nl_a$x, X[, i], col = i, lw = 1)
+}
+
+X2 <- X %*% diag(coef(simple)[2:10])
+plot(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  type = "n",
+  ylim = c(-8, 3),
+  xlab = "x", ylab = "y"
+)
+for (i in 1:ncol(X2)) {
+  lines(sim_nl_a$x, X2[, i], col = i, lw = 1)
+}
+lines(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  lw = 3
+)
+```
+
 
 ## Smoothing splines
 
@@ -256,7 +293,7 @@ ggplot(line, aes(x, y)) +
 
 ## A simple GAM
 
-```{r simple-10}
+```{r echo = TRUE, simple-10}
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
 summary(simple)
 ```
@@ -293,7 +330,7 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
 
 * ordered `by`-variables
 
-```{r eval=FALSE}
+```{r echo = TRUE, eval=FALSE}
 compare <- gam(
   y ~
     group +
