@@ -12,6 +12,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 theme_set(theme_minimal())
+library(mgcv)
 ```
 
 ```{r data}
@@ -21,13 +22,13 @@ y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
 x_1 <- seq(0, 100, 1)
 y_1 <- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
 
-sim_traj <- tibble(
+sim_nl <- tibble(
   x = c(x, x_1),
   y = c(y, y_1),
-  g = rep(c("a", "b"), each = 101)
+  group = rep(c("a", "b"), each = 101)
 )
 
-sim_traj_a <- filter(sim_traj, g == "a")
+sim_nl_a <- filter(sim_nl, group == "a")
 ```
 
 ## Linear models
@@ -131,7 +132,7 @@ ggplot(line, aes(x, y)) +
 ## LM with non-linear data
 
 ```{r plot-data}
-ggplot(sim_traj_a, aes(x, y)) +
+ggplot(sim_nl_a, aes(x, y)) +
   geom_point() +
   labs(title = "Some non-linear data")
 ```
@@ -139,7 +140,7 @@ ggplot(sim_traj_a, aes(x, y)) +
 ## LM with non-linear data
 
 ```{r plot-lm}
-ggplot(sim_traj_a, aes(x, y)) +
+ggplot(sim_nl_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Some non-linear data")
@@ -148,10 +149,10 @@ ggplot(sim_traj_a, aes(x, y)) +
 ## LM with non-linear data
 
 ```{r error-2}
-m <- lm(y ~ x, data = sim_traj_a)
+m <- lm(y ~ x, data = sim_nl_a)
 yhat <- m$fitted.values
-diff <- sim_traj_a$y - yhat  
-ggplot(sim_traj_a, aes(x, y)) +
+diff <- sim_nl_a$y - yhat  
+ggplot(sim_nl_a, aes(x, y)) +
   geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
@@ -170,7 +171,7 @@ How to account for non-linearity in a linear model?
 ## LM with non-linear data
 
 ```{r 2-poly}
-ggplot(sim_traj_a, aes(x, y)) +
+ggplot(sim_nl_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
   labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
@@ -179,7 +180,7 @@ ggplot(sim_traj_a, aes(x, y)) +
 ## LM with non-linear data
 
 ```{r 3-poly}
-ggplot(sim_traj_a, aes(x, y)) +
+ggplot(sim_nl_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
   labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
@@ -188,7 +189,7 @@ ggplot(sim_traj_a, aes(x, y)) +
 ## LM with non-linear data
 
 ```{r 10-poly}
-ggplot(sim_traj_a, aes(x, y)) +
+ggplot(sim_nl_a, aes(x, y)) +
   geom_point() +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
   labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
@@ -198,7 +199,16 @@ ggplot(sim_traj_a, aes(x, y)) +
 
 ```{r 10-poly-2, warning=FALSE}
 ggplot(line, aes(x, y)) +
-  geom_point(colour = "red", size = 2) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+```
+
+## LM with non-linear data
+
+```{r 10-poly-21, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 2) +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
   scale_x_continuous(breaks = 1:10) +
   labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
@@ -233,6 +243,8 @@ ggplot(line, aes(x, y)) +
 
 * a spline is the sum of the products of each basis function and its coefficient
 
+<!-- Show basis functions -->
+
 ## Smoothing splines
 
 * there are **several kinds** of splines
@@ -240,5 +252,63 @@ ggplot(line, aes(x, y)) +
     * thin plate regression splines
     * cubic regression splines
 
+* for more info, run `?smooth.terms`
 
+## A simple GAM
+
+```{r simple-10}
+simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+summary(simple)
+```
+
+## A simple GAM
+
+```{r simple-10-plot}
+plot(simple)
+```
+
+## A simple GAM
+
+```{r simple-5}
+simple <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
+plot(simple)
+```
+
+## Comparing levels
+
+```{r}
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point()
+```
+
+## Comparing levels
+
+```{r message=FALSE}
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+```
+
+## Comparing levels
+
+* ordered `by`-variables
+
+```{r eval=FALSE}
+compare <- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl
+)
+```
+
+## Comparing levels
+
+* to use ordered `by`-variables
+    * change factor to **ordered factor**
+    * change factor contrast to **treatment contrast** (`contr.treatment`)
+        * the default in ordered factors is `contr.poly`, this won't work
+    * include factor as **parametric term**
+    * include a **reference smooth** and a **difference smooth** with the `by`-variable
 
