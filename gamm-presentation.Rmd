@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 theme_set(theme_minimal())
 library(mgcv)
+library(itsadug)
+library(tidymv)
 ```
 
 ```{r data}
@@ -294,8 +296,10 @@ lines(
 
 * there are **several kinds** of splines
     * each with their own basis functions
-    * thin plate regression splines
-    * cubic regression splines
+
+* most common
+    * *thin plate regression splines*
+    * *cubic regression splines*
 
 * for more info, run `?smooth.terms`
 
@@ -356,4 +360,36 @@ compare <- gam(
         * the default in ordered factors is `contr.poly`, this won't work
     * include factor as **parametric term**
     * include a **reference smooth** and a **difference smooth** with the `by`-variable
+
+## Comparing levels
+
+```{r ordered, echo=TRUE}
+sim_nl <- sim_nl %>%
+  mutate(group = ordered(group, levels = c("a", "b")))
+contrasts(sim_nl$group) <- "contr.treatment"
+```
+
+## Comparing levels
+
+```{r compare-gam, echo = TRUE}
+compare <- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl
+)
+```
+
+## Comparing levels
+
+```{r compare-summary}
+summary(compare)
+```
+
+## Compare levels
+
+```{r plot-smooths}
+plot_smooths(compare, x, group)
+```
 
