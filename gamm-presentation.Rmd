@@ -6,6 +6,7 @@ output:
   beamer_presentation:
     includes:
       in_header: header.tex
+fontsize: 10pt
 ---
 
 ```{r setup, include=FALSE}
@@ -15,9 +16,14 @@ theme_set(theme_minimal())
 library(mgcv)
 library(itsadug)
 library(tidymv)
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+scale_fill_discrete <- function(...) scale_fill_manual(values = cbPalette, ...)
+scale_colour_discrete <- function(...) scale_colour_manual(values = cbPalette, ...)
+scale_fill_viridis_d <- function(...) scale_fill_manual(values = cbPalette, ...)
+scale_colour_viridis_d <- function(...) scale_colour_manual(values = cbPalette, ...)
 ```
 
-```{r data}
+```{r data, message=FALSE}
 set.seed(8788)
 x <- seq(0,100,1)
 y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
@@ -31,6 +37,21 @@ sim_nl <- tibble(
 )
 
 sim_nl_a <- filter(sim_nl, group == "a")
+
+vowels <- read_csv("./data/vowels.csv") %>%
+  mutate(
+    vowel = as.ordered(vowel),
+    voicing = ordered(voicing, levels = c("voiceless", "voiced")),
+    place = as.ordered(place),
+    vow_voi = interaction(vowel, voicing),
+    vow_voi = as.ordered(vow_voi),
+    speaker = as.factor(speaker)
+  )
+
+contrasts(vowels$vowel) <- "contr.treatment"
+contrasts(vowels$voicing) <- "contr.treatment"
+contrasts(vowels$place) <- "contr.treatment"
+contrasts(vowels$vow_voi) <- "contr.treatment"
 ```
 
 ## Linear models
@@ -74,7 +95,7 @@ ggplot(line, aes(x, y)) +
 
 * In science, we have $x$ and $y$...
 
-* for example, vowel duration and VOT
+* for example, vowel duration and VOT, speech rate and pitch, etc...
 
 ## Linear models
 
@@ -203,7 +224,8 @@ ggplot(sim_nl_a, aes(x, y)) +
 ggplot(line, aes(x, y)) +
   geom_point(size = 2) +
   scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
 ```
 
 ## LM with non-linear data
@@ -213,7 +235,8 @@ ggplot(line, aes(x, y)) +
   geom_point(size = 2) +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
   scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
 ```
 
 ## Generalised additive models
@@ -237,13 +260,13 @@ ggplot(line, aes(x, y)) +
 
 ## Smoothing splines, basis, basis functions
 
-* smooths in GAMs are **smoothing splines**
+* Smooths in GAMs are **smoothing splines**
     * splines are defined piecewise with a set of polynomials
 
-* the set of polynomials is called a **basis**
+* The set of polynomials is called a **basis**
     * the basis is composed of **basis functions** (the polynomials)
 
-* a spline is the sum of the products of each basis function and its coefficient
+* A spline is the sum of the products of each basis function and its coefficient
 
 ## Basis functions
 
@@ -285,25 +308,27 @@ lines(
 
 ## Smoothing parameter
 
-* 'wiggliness' is related to number of basis functions
+* 'Wiggliness' is related to number of basis functions
     * more basis functions, more wiggliness (less smoothing)
 
-* the **smoothing parameter** penalises wiggliness
+* The **smoothing parameter** penalises wiggliness
     * high values = less wiggliness (more smoothing)
     * estimated from the data
 
 ## Smoothing splines
 
-* there are **several kinds** of splines
+* There are **several kinds** of splines
     * each with their own basis functions
 
-* most common
+* Most common
     * *thin plate regression splines*
     * *cubic regression splines*
 
-* for more info, run `?smooth.terms`
+* For more info, run `?smooth.terms`
 
 ## A simple GAM
+
+\tiny
 
 ```{r simple-10, echo = TRUE}
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
@@ -340,7 +365,7 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
 
 ## Comparing levels
 
-* ordered `by`-variables
+* `by`-variables with ordered factors
 
 ```{r by-variables, echo = TRUE, eval=FALSE}
 compare <- gam(
@@ -354,7 +379,7 @@ compare <- gam(
 
 ## Comparing levels
 
-* to use ordered `by`-variables
+* To use `by`-variables with ordered factors
     * change factor to **ordered factor**
     * change factor contrast to **treatment contrast** (`contr.treatment`)
         * the default in ordered factors is `contr.poly`, this won't work
@@ -372,6 +397,8 @@ contrasts(sim_nl$group) <- "contr.treatment"
 ## Comparing levels
 
 ```{r compare-gam, echo = TRUE}
+library(mgcv)
+
 compare <- gam(
   y ~
     group +
@@ -383,13 +410,148 @@ compare <- gam(
 
 ## Comparing levels
 
+\tiny
+
 ```{r compare-summary}
 summary(compare)
 ```
 
-## Compare levels
+## Comparing levels
+
+```{r plot-smooth-fn, eval=FALSE, echo=TRUE}
+library(tidymv)
+
+plot_smooths(compare, x, group)
+```
+
+## Comparing levels
 
 ```{r plot-smooths}
 plot_smooths(compare, x, group)
+```
+
+## Significance testing
+
+* Several ways for testing significance of smooths
+
+* We will used a combined method
+    * model comparison with `itsadug::compareML()` of a full and a null model
+    * visualisation of the difference smooth with `tidymv::plot_difference()`
+        * (you can also use `itsadug::plot_diff()`)
+
+## Significance testing
+
+\footnotesize
+
+```{r ml, echo=TRUE, eval=FALSE}
+compare_1 <- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl,
+  method = "ML"
+)
+
+compare_0 <- gam(
+  y ~
+    s(x, bs = "cr", k = 5),
+  data = sim_nl,
+  method = "ML"
+)
+```
+
+## Significance testing
+
+```{r compare-1-0}
+compare_1 <- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl,
+  method = "ML"
+)
+
+compare_0 <- gam(
+  y ~
+    s(x, bs = "cr", k = 5),
+  data = sim_nl,
+  method = "ML"
+)
+```
+
+\footnotesize
+
+```{r compare-ml, echo=TRUE}
+compareML(compare_0, compare_1)
+```
+
+## Significance testing
+
+* Let's plot the difference smooth with `tidymv::plot_difference()`
+
+```{r difference, echo=TRUE, eval=FALSE}
+plot_difference(compare, x, list(group = c("b", "a")))
+```
+
+## Significance testing
+
+```{r plot-difference}
+plot_difference(compare, x, list(group = c("b", "a")))
+```
+
+## Hands on
+
+\Huge
+\centering
+
+Tutorial 1
+
+## Random effects
+
+<!-- say random needs to be a factor -->
+
+```{r}
+random_gam <- bam(
+  f1 ~
+    voicing +
+    s(time_point, k = 6) +
+    s(time_point, k = 6, by = voicing) +
+    s(time_point, speaker, bs = "fs", m = 1),
+  data = vowels
+)
+summary(random_gam)
+```
+
+## Random effects
+
+```{r}
+plot_smooths(random_gam, time_point, voicing)
+```
+
+## Interactions
+
+```{r}
+ggplot(vowels, aes(time_point, f1, colour = voicing)) +
+  geom_smooth(method = "gam", formula = y ~ s(x, k = 5)) +
+  facet_grid(place ~ vowel)
+```
+
+## Interactions
+
+```{r}
+vowel_gam <- bam(
+  f1 ~
+    vow_voi +
+    s(time_point, k = 6) +
+    s(time_point, by = vow_voi, k = 6),
+  data = vowels
+)
+summary(vowel_gam)
+```
+
+```{r}
+plot_smooths(vowel_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
 ```
 
