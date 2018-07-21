@@ -439,6 +439,8 @@ plot_smooths(compare, x, group)
     * visualisation of the difference smooth with `tidymv::plot_difference()`
         * (you can also use `itsadug::plot_diff()`)
 
+[say that you need to use ML]
+
 ## Significance testing
 
 \footnotesize
@@ -506,7 +508,11 @@ plot_difference(compare, x, list(group = c("b", "a")))
 \Huge
 \centering
 
-Tutorial 1
+Practical 1
+
+## Dynamic data
+
+[intro to dynamic data, like time series]
 
 ## Autocorrelation
 
@@ -586,6 +592,10 @@ plot_smooths(ar_gam, time_point, voicing, vowel)
 ```{r ar-gam-acf}
 acf_resid(ar_gam, split_pred = "AR.start")
 ```
+
+## Random effects
+
+[introduce why GAMM with two ms]
 
 ## Random effects
 
