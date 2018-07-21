@@ -106,6 +106,12 @@ focus_gam <- gam(
 summary(focus_gam)
 ```
 
+```{r plot-focus-gam}
+plot_smooths(focus_gam, speech_rate, comparison = focus_o)
+```
+
+# Significance testing
+
 To test for significance, we fit a null model and compare this model with the full model using `compareML()`.
 The null model must exclude *both* the parametric term and the difference smooth.
 
