@@ -508,16 +508,97 @@ plot_difference(compare, x, list(group = c("b", "a")))
 
 Tutorial 1
 
+## Autocorrelation
+
+* more data
+
+* use `bam()` (big GAM)
+
+## Autocorrelation
+
+```{r bam, echo=TRUE}
+big_gam <- bam(
+  f1 ~
+    voicing +
+    vowel +
+    s(time_point, k = 6) +
+    s(time_point, k = 6, by = voicing) +
+    s(time_point, k = 6, by = vowel),
+  data = vowels
+)
+```
+
+
+## Autocorrelation
+
+\tiny
+
+```{r bam-summary}
+summary(big_gam)
+```
+
+## Autocorrelation
+
+```{r bam-plot}
+plot_smooths(big_gam, time_point, voicing, vowel)
+```
+
+## Autocorrelation
+
+```{r bam-acf}
+acf_plot(resid(big_gam), split_by = list(vowels$index))
+```
+
+## Autocorrelation
+
+```{r bam-start-event}
+vowels <- vowels %>%
+  arrange(speaker, index, time_point) %>%
+  create_event_start("index")
+```
+
+## Autocorrelation
+
+```{r ar-gam}
+rho <- start_value_rho(big_gam)
+
+ar_gam <- bam(
+  f1 ~
+    voicing +
+    vowel +
+    s(time_point, k = 6) +
+    s(time_point, k = 6, by = voicing) +
+    s(time_point, k = 6, by = vowel),
+  data = vowels,
+  rho = rho,
+  AR.start = vowels$start.event
+)
+```
+
+## Autocorrelation
+
+```{r ar-gam-plot}
+plot_smooths(ar_gam, time_point, voicing, vowel)
+```
+
+## Autocorrelation
+
+```{r ar-gam-acf}
+acf_resid(ar_gam, split_pred = "AR.start")
+```
+
 ## Random effects
 
 <!-- say random needs to be a factor -->
 
-```{r}
+```{r random-gam}
 random_gam <- bam(
   f1 ~
     voicing +
+    vowel +
     s(time_point, k = 6) +
     s(time_point, k = 6, by = voicing) +
+    s(time_point, k = 6, by = vowel) +
     s(time_point, speaker, bs = "fs", m = 1),
   data = vowels
 )
@@ -526,13 +607,13 @@ summary(random_gam)
 
 ## Random effects
 
-```{r}
-plot_smooths(random_gam, time_point, voicing)
+```{r random-gam-plot}
+plot_smooths(random_gam, time_point, voicing, vowel)
 ```
 
 ## Interactions
 
-```{r}
+```{r interactions}
 ggplot(vowels, aes(time_point, f1, colour = voicing)) +
   geom_smooth(method = "gam", formula = y ~ s(x, k = 5)) +
   facet_grid(place ~ vowel)
@@ -540,7 +621,7 @@ ggplot(vowels, aes(time_point, f1, colour = voicing)) +
 
 ## Interactions
 
-```{r}
+```{r vowel-gam}
 vowel_gam <- bam(
   f1 ~
     vow_voi +
@@ -551,7 +632,7 @@ vowel_gam <- bam(
 summary(vowel_gam)
 ```
 
-```{r}
+```{r vowel-gam-plot}
 plot_smooths(vowel_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
 ```
 
