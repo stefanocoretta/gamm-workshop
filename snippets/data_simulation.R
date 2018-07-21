@@ -1,3 +1,5 @@
+library(tidyverse)
+
 set.seed(4321)
 x <- seq(0, 100, 10)
 y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(11, 0, 1)
