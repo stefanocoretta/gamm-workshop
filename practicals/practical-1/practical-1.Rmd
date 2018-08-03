@@ -1,0 +1,192 @@
+---
+title: "Practical 1"
+output:
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+theme_set(theme_minimal())
+library(mgcv)
+library(itsadug)
+library(tidymv)
+
+# Simulate data
+set.seed(2018)
+n <- 500
+x <- 1:n
+y <- 3 * log(x) + 10 + rnorm(n, 0, 1)
+x_1 <- 1:n
+y_1 <- 3 * log(x) + 4 + rnorm(n, 0, 1)
+
+sim_data <- tibble(
+  speech_rate = c(x, x_1),
+  F0 = c(y, y_1),
+  focus = rep(c("focus", "non-focus"), each = n)
+) %>%
+  mutate(
+    focus_o = ordered(focus, levels = c("non-focus", "focus"))
+  )
+contrasts(sim_data$focus_o) <- "contr.treatment"
+```
+
+
+## Fit a simple GAM
+
+We will start by fitting a simple GAM to a big(ish) simulated dataset (*n* = 1000), `sim_data`. This dummy dataset includes measurements of **speech rate** and **fundamental frequency** (F0).[^1] We want to know what is the relationship between speech rate and F0. The fictional experiment also included two focus conditions: *focus* and *non-focus*. So we are particularly interested in weather the condition *focus* has an effect on the relationship between speech rate and F0.
+
+In this practical, we will build other model incrementally for pedagogical purpuses. In real life applications, you will prepare the data for fitting and start from a model with all of the terms you think are necessary.
+
+
+### The data
+
+Let's first have a look at how the dataset looks like. Run the following code.
+
+```{r sim-data, exercise=TRUE, exercise.lines=1}
+sim_data
+```
+
+Now let's plot the data.
+
+```{r plot-data, exercise=TRUE}
+sim_data %>%
+  ggplot(aes(speech_rate, F0)) +
+  geom_point(alpha = 0.7, colour = "orchid4")
+```
+
+There is a clear non-linear relationship between speech rate and F0: when speech rate increases, F0 increases too, but at faster speech rates the increase in F0 is smaller. Also, we can see a separation between two groups in the data, but we will deal with this later.
+
+We can model this non-linear increase in F0 using a GAM.
+
+### Fit a GAM
+
+Refresher:
+* `s()` defines a smooth (a curve) over a variable, in this case `speech_rate`
+* `bs` is used to select the type of *basis*
+    * `tp` is a thin plate regression spline
+* `k` is the number of *knots* (= number of basis functions + 1)
+
+```{r F0-gam, exercise = TRUE}
+F0_gam <- gam(
+  # the outcome variable: F0
+  F0 ~
+    # a smooth for speech rate
+    s(speech_rate, bs = "tp", k = 10),
+  # the data
+  data = sim_data
+)
+summary(F0_gam)
+```
+
+```{r quiz-1}
+quiz(
+  question("Is there a non-linear correlation between `speech rate` and `F0`? (Hint: check the EDF value of `s(speech_rate)` and the *p*-value)",
+    answer("yes", correct = TRUE, message = "When `edf > 1`, the smooth is non-flat."),
+    answer("no", message = "When `edf = 1`, the smooth is flat.")
+  )
+)
+```
+
+### Plot a single smooth
+
+```{r plot-gam-setup}
+F0_gam <- gam(
+  # the outcome variable: F0
+  F0 ~
+    # a smooth for speech rate
+    s(speech_rate, bs = "tp", k = 10),
+  # the data
+  data = sim_data
+)
+```
+
+Let's plot the model with `plot()`!
+
+```{r plot-gam, exercise=TRUE, exercise.lines=1}
+plot(F0_gam)
+```
+
+
+
+[^1]: If you want to see the code for generating the data, look at the file `practical-1.Rmd`, in the `setup` chunk file.
+
+
+
+
+
+
+## Compare focus vs. non-focus
+
+### Prepare ordered factors
+
+What we are really interested in is to compare the effect of **speech rate** on F0 in the two focus conditions: *focus* and *non-focus*. We can do this by setting up a model using a `by` variable with an ordered factor. Remember that to use a `by` variable we need to create an ordered factor and change the contrasts to treatment.
+
+```{r ordered, echo=TRUE}
+sim_data <- sim_data %>%
+  mutate(
+    focus_o = ordered(focus, levels = c("non-focus", "focus"))
+  )
+contrasts(sim_data$focus_o) <- "contr.treatment"
+```
+
+### Fit with a `by` variable
+
+We can now fit a GAM using a smooth with a `by` variable. To do so, we need to add `focus` as a parametric term, include a smooth without the `by` variable (the reference smooth) and one with it (the difference smooth).
+
+```{r focus-gam, exercise=TRUE}
+focus_gam <- gam(
+  # the outcome variable: F0
+  F0 ~
+    # the parametric term
+    focus_o +
+    # the reference smooth
+    s(speech_rate, bs = "tp", k = 10) +
+    # the difference smooth
+    s(speech_rate, by = focus_o, bs = "tp", k = 10),
+  # the data
+  data = sim_data,
+  method = "ML"
+)
+summary(focus_gam)
+```
+
+```{r focus-setup}
+focus_gam <- gam(
+  # the outcome variable: F0
+  F0 ~
+    # the parametric term
+    focus_o +
+    # the reference smooth
+    s(speech_rate, bs = "tp", k = 10) +
+    # the difference smooth
+    s(speech_rate, by = focus_o, bs = "tp", k = 10),
+  # the data
+  data = sim_data,
+  method = "ML"
+)
+```
+
+And finally let's plot the estimated smooths with `tidymv::plot_smooths()`.
+
+```{r plot-focus, exercise=TRUE, exepriment.lines=1}
+plot_smooths(focus_gam, speech_rate, comparison = focus_o)
+```
+
+### Significance testing
+
+To test for significance, we fit a null model and compare this model with the full model using `compareML()`. The null model must exclude *both* the parametric term and the difference smooth.
+
+```{r compare-focus-gam, exercise=TRUE, exercise.setup="focus-setup"}
+focus_gam_null <- gam(
+  F0 ~
+    s(speech_rate, bs = "tp", k = 10),
+  data = sim_data,
+  method = "ML"
+)
+
+compareML(focus_gam_null, focus_gam)
+```
