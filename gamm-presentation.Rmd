@@ -249,11 +249,13 @@ ggplot(line, aes(x, y)) +
 ## Smooth terms
 
 * LMs have **parametric terms**
-    * $\beta_nx_n$ (`x` in `R`)
+    * $\beta_nx_n$
+    * `x` in `R`
     * linear effects
 
 * GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers)
-    * $f(x)$, `s(x)` in `R`
+    * $f(x)$
+    * `s(x)` in `R`
     * non-linear effects
 
 * `gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
@@ -512,15 +514,25 @@ Practical 1
 
 ## Dynamic data
 
-[intro to dynamic data, like time series]
+* "Dynamic speech analysis is a term used to refer to analyses that look at measureable quantities of speech that **vary in space and/or time**" [@soskuthy2017]
 
-## Autocorrelation
+* examples
+    * formant trajectories
+    * pitch contours
+    * geographic (*diatopic*) variation
+    * tongue contours
 
-* more data
+* two main types
+    * **time series data**
+    * **spatial data**
+
+## Dynamic data
+
+* more data (*n* > 1000)
 
 * use `bam()` (big GAM)
 
-## Autocorrelation
+## Dynamic data
 
 ```{r bam, echo=TRUE}
 big_gam <- bam(
@@ -535,7 +547,7 @@ big_gam <- bam(
 ```
 
 
-## Autocorrelation
+## Dynamic data
 
 \tiny
 
@@ -543,7 +555,7 @@ big_gam <- bam(
 summary(big_gam)
 ```
 
-## Autocorrelation
+## Dynamic data
 
 ```{r bam-plot}
 plot_smooths(big_gam, time_point, voicing, vowel)
@@ -646,3 +658,9 @@ summary(vowel_gam)
 plot_smooths(vowel_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
 ```
 
+## Hands on
+
+\Huge
+\centering
+
+Practical 2
