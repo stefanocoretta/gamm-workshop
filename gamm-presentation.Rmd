@@ -4,6 +4,8 @@ author: "Stefano Coretta"
 date: "12/07/2018"
 output:
   beamer_presentation:
+    colortheme: spruce
+    highlight: tango
     includes:
       in_header: header.tex
 fontsize: 10pt
