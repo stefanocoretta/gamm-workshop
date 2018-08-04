@@ -516,21 +516,41 @@ Practical 1
 
 * "Dynamic speech analysis is a term used to refer to analyses that look at measureable quantities of speech that **vary in space and/or time**" [@soskuthy2017]
 
-* examples
+* Examples
     * formant trajectories
     * pitch contours
     * geographic (*diatopic*) variation
     * tongue contours
 
-* two main types
+## Dynamic data
+
+* Two main types
     * **time series data**
     * **spatial data**
 
+* More data (*n* > 1000)
+    * use `bam()` (big GAM) instead of `gam()`
+
 ## Dynamic data
 
-* more data (*n* > 1000)
+* formant trajectories (time series data)
 
-* use `bam()` (big GAM)
+\tiny
+
+```{r vowels}
+vowels
+```
+
+## Dynamic data
+
+```{r vowels-plot}
+vowels %>%
+  ggplot(aes(time_point, f1, colour = voicing)) +
+  geom_smooth(method = "loess") +
+  facet_grid(~ vowel) +
+  labs(title = "Plot of F1 trajectory by voicing and vowel")
+```
+
 
 ## Dynamic data
 
@@ -546,7 +566,6 @@ big_gam <- bam(
 )
 ```
 
-
 ## Dynamic data
 
 \tiny
@@ -558,62 +577,39 @@ summary(big_gam)
 ## Dynamic data
 
 ```{r bam-plot}
-plot_smooths(big_gam, time_point, voicing, vowel)
+plot_smooths(big_gam, time_point, voicing, vowel) +
+  labs(title = "Estimated F1 trajectories (from GAM)")
 ```
 
-## Autocorrelation
+## Dynamic data
 
-```{r bam-acf}
-acf_plot(resid(big_gam), split_by = list(vowels$index))
-```
-
-## Autocorrelation
-
-```{r bam-start-event}
-vowels <- vowels %>%
-  arrange(speaker, index, time_point) %>%
-  create_event_start("index")
-```
-
-## Autocorrelation
-
-```{r ar-gam}
-rho <- start_value_rho(big_gam)
-
-ar_gam <- bam(
-  f1 ~
-    voicing +
-    vowel +
-    s(time_point, k = 6) +
-    s(time_point, k = 6, by = voicing) +
-    s(time_point, k = 6, by = vowel),
-  data = vowels,
-  rho = rho,
-  AR.start = vowels$start.event
-)
-```
-
-## Autocorrelation
-
-```{r ar-gam-plot}
-plot_smooths(ar_gam, time_point, voicing, vowel)
-```
-
-## Autocorrelation
-
-```{r ar-gam-acf}
-acf_resid(ar_gam, split_pred = "AR.start")
+```{r bam-difference}
+plot_difference(big_gam, time_point, list(voicing = c("voiced", "voiceless"))) +
+  labs(title = "Difference smooth (voiced - voiceless)")
 ```
 
 ## Random effects
 
-[introduce why GAMM with two ms]
+* Only **fixed effects** so far...
+
+* **G**eneralised **A**dditive **M**ixed **M**odel (GAMM)
+    * fixed + random effects
+
+* Include a **random smooth** term with the **factor smooth interaction** as basis
 
 ## Random effects
 
-<!-- say random needs to be a factor -->
+* Factor smooth interaction
+    * `bs = "fs"`
+    * a smooth is fitted at each level of a factor
 
-```{r random-gam}
+* the random effect variable *needs to be a factor*
+
+* `s(time, speaker, bs = "f")`
+
+## Random effects
+
+```{r random-gam, echo=TRUE, warning=FALSE}
 random_gam <- bam(
   f1 ~
     voicing +
@@ -621,16 +617,32 @@ random_gam <- bam(
     s(time_point, k = 6) +
     s(time_point, k = 6, by = voicing) +
     s(time_point, k = 6, by = vowel) +
+    # random smooth
     s(time_point, speaker, bs = "fs", m = 1),
   data = vowels
 )
+```
+
+## Random effects
+
+\tiny
+
+```{r random-summary}
 summary(random_gam)
 ```
 
 ## Random effects
 
 ```{r random-gam-plot}
-plot_smooths(random_gam, time_point, voicing, vowel)
+plot_smooths(random_gam, time_point, voicing, vowel) +
+  labs(title = "Estimated F1 trajectories (from GAM with random smooths)")
+```
+
+## Random effects
+
+```{r random-difference}
+plot_difference(random_gam, time_point, list(voicing = c("voiced", "voiceless"))) +
+  labs(title = "Difference smooth (voiced - voiceless)")
 ```
 
 ## Interactions
@@ -638,24 +650,126 @@ plot_smooths(random_gam, time_point, voicing, vowel)
 ```{r interactions}
 ggplot(vowels, aes(time_point, f1, colour = voicing)) +
   geom_smooth(method = "gam", formula = y ~ s(x, k = 5)) +
-  facet_grid(place ~ vowel)
+  facet_grid(. ~ vowel) +
+  labs(title = "Plot of F1 trajectories by voicing and vowel")
 ```
 
 ## Interactions
 
-```{r vowel-gam}
+* Use factor `by`-variable with the interaction of the terms
+
+* Create the interaction with `interaction()`
+    * be sure it is an ordered factor
+
+## Interactions
+
+```{r do-interaction, echo=TRUE, eval=FALSE}
+vowels <- vowels %>%
+  mutate(
+    vow_voi = interaction(vowel, voicing),
+    vow_voi = as.ordered(vow_voi)
+  )
+```
+
+## Interactions
+
+```{r vowel-gam, echo=TRUE, warning=FALSE}
 vowel_gam <- bam(
   f1 ~
     vow_voi +
     s(time_point, k = 6) +
-    s(time_point, by = vow_voi, k = 6),
+    s(time_point, by = vow_voi, k = 6) +
+    s(time_point, speaker, bs = "fs", m = 1),
   data = vowels
 )
-summary(vowel_gam)
 ```
 
+## Interactions
+
+\footnotesize
+
+```{r vowel-summary-1}
+cat(capture.output(summary(vowel_gam))[2:18], sep = "\n")
+```
+
+## Interactions
+
+\footnotesize
+
+```{r vowel-summary-2}
+cat(capture.output(summary(vowel_gam))[20:33], sep = "\n")
+```
+
+
+## Interactions
+
 ```{r vowel-gam-plot}
-plot_smooths(vowel_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
+plot_smooths(vowel_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing"))) +
+  labs(title = "Estimated F1 trajectories (from GAM with by-interactions)")
+```
+
+## Interactions
+
+```{r ar-difference-a}
+plot_difference(vowel_gam, time_point, list(vow_voi = c("a.voiced", "a.voiceless"))) +
+  labs(title = "Difference smooth of /a/ (voiced - voiceless)")
+```
+
+## Interactions
+
+```{r ar-difference-u}
+plot_difference(vowel_gam, time_point, list(vow_voi = c("u.voiced", "u.voiceless"))) +
+  labs(title = "Difference smooth of /u/ (voiced - voiceless)")
+```
+
+## Residuals autocorrelation
+
+```{r bam-acf}
+acf_plot(resid(vowel_gam), split_by = list(vowels$index))
+```
+
+## Residuals autocorrelation
+
+```{r bam-start-event, echo=TRUE}
+vowels <- vowels %>%
+  arrange(speaker, index, time_point) %>%
+  create_event_start("index")
+```
+
+## Residuals autocorrelation
+
+```{r ar-gam, echo=TRUE, warning=FALSE}
+rho <- start_value_rho(vowel_gam)
+
+ar_gam <- bam(
+  f1 ~
+    vow_voi +
+    s(time_point, k = 6) +
+    s(time_point, k = 6, by = vow_voi) +
+    s(time_point, speaker, bs = "fs", m = 1),
+  data = vowels,
+  rho = rho,
+  AR.start = vowels$start.event
+)
+```
+
+## Residuals autocorrelation
+
+```{r ar-gam-plot}
+plot_smooths(ar_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
+```
+
+## Residuals autocorrelation
+
+```{r ar-gam-acf}
+acf_resid(ar_gam, split_pred = "AR.start")
+```
+
+## Residuals autocorrelation
+
+```{r ar-difference}
+plot_difference(ar_gam, time_point, list(vow_voi = c("u.voiced", "u.voiceless"))) +
+  labs(title = "Difference smooth of /u/ (voiced - voiceless)")
 ```
 
 ## Hands on
