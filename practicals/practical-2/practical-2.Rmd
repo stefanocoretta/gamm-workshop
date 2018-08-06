@@ -1,0 +1,38 @@
+---
+title: "Practical 2"
+output:
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+theme_set(theme_minimal())
+library(mgcv)
+library(itsadug)
+library(tidymv)
+
+vowels <- read_csv("../../data/vowels.csv") %>%
+  mutate(
+    vowel = as.ordered(vowel),
+    voicing = ordered(voicing, levels = c("voiceless", "voiced")),
+    place = as.ordered(place),
+    vow_voi = interaction(vowel, voicing),
+    vow_voi = as.ordered(vow_voi),
+    speaker = as.factor(speaker)
+  )
+
+contrasts(vowels$vowel) <- "contr.treatment"
+contrasts(vowels$voicing) <- "contr.treatment"
+contrasts(vowels$place) <- "contr.treatment"
+contrasts(vowels$vow_voi) <- "contr.treatment"
+```
+
+## Dynamic data: F0 trajectory
+
+In `Practical 1` we looked at F0 as a function of speech rate. In this practical, we will instead model F0 trajectories. F0 trajectories are a type of time series (dynamic) data.
+
+### Fit a model with a smooth over F0
