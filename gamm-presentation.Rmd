@@ -47,7 +47,8 @@ vowels <- read_csv("./data/vowels.csv") %>%
     place = as.ordered(place),
     vow_voi = interaction(vowel, voicing),
     vow_voi = as.ordered(vow_voi),
-    speaker = as.factor(speaker)
+    speaker = as.factor(speaker),
+    word = as.factor(word)
   )
 
 contrasts(vowels$vowel) <- "contr.treatment"
