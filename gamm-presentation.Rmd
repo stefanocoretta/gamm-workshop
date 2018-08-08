@@ -49,7 +49,8 @@ vowels <- read_csv("./data/vowels.csv") %>%
     vow_voi = as.ordered(vow_voi),
     speaker = as.factor(speaker),
     word = as.factor(word)
-  )
+  ) %>%
+  na.omit()
 
 contrasts(vowels$vowel) <- "contr.treatment"
 contrasts(vowels$voicing) <- "contr.treatment"
@@ -647,6 +648,16 @@ plot_smooths(random_gam, time_point, voicing, vowel) +
 plot_difference(random_gam, time_point, list(voicing = c("voiced", "voiceless"))) +
   labs(title = "Difference smooth (voiced - voiceless)")
 ```
+
+## Random effects
+
+* You can also include classical random intercepts and slopes
+
+* random intercept
+    * `s(speaker, bs = "re")`
+
+* random slope
+    * `s(speaker, time_point, "re")`
 
 ## Interactions
 
