@@ -65,13 +65,17 @@ We can model this non-linear increase in F0 using a GAM.
 
 ### Fit a GAM
 
+Let's now fit a GAM to F0. We will use the package `mgcv` and the function `gam()` from that package to fit a GAM.
+
 Refresher:
 * `s()` defines a smooth (a curve) over a variable, in this case `speech_rate`
 * `bs` is used to select the type of *basis*
-    * `tp` is a thin plate regression spline
+    * `tp` is a thin plate regression spline (and it is also the default)
 * `k` is the number of *knots* (= number of basis functions + 1)
 
 ```{r F0-gam, exercise = TRUE}
+library(mgcv)
+
 F0_gam <- gam(
   # the outcome variable: F0
   F0 ~
@@ -105,13 +109,26 @@ F0_gam <- gam(
 )
 ```
 
-Let's plot the model with `plot()`!
+Let's now plot the model with `plot()`!
 
 ```{r plot-gam, exercise=TRUE, exercise.lines=1}
 plot(F0_gam)
 ```
 
+If you want, try different basis and different values of k and plot the result in the following exercise.
 
+```{r try, exercise=TRUE}
+F0_gam <- gam(
+  # the outcome variable: F0
+  F0 ~
+    # a smooth for speech rate
+    s(speech_rate, bs = "tp", k = 10),
+  # the data
+  data = sim_data
+)
+
+plot(F0_gam)
+```
 
 [^1]: If you want to see the code for generating the data, look at the file `practical-1.Rmd`, in the `setup` chunk file.
 
@@ -124,7 +141,7 @@ plot(F0_gam)
 
 ### Prepare ordered factors
 
-What we are really interested in is to compare the effect of **speech rate** on F0 in the two focus conditions: *focus* and *non-focus*. We can do this by setting up a model using a `by` variable with an ordered factor. Remember that to use a `by` variable we need to create an ordered factor and change the contrasts to treatment.
+What we are really interested in is to compare the effect of **speech rate** on F0 in the two focus conditions: *focus* and *non-focus*. We can do this by setting up a model using a `by` variable with an ordered factor. Remember that to use a `by` variable we need to create an ordered factor and change the contrasts to treatment (I did this for you already).
 
 ```{r ordered, echo=TRUE}
 sim_data <- sim_data %>%
