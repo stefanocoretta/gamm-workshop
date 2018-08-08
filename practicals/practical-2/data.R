@@ -10,7 +10,8 @@ vowels <- read_csv("./data/vowels.csv") %>%
     vow_voi = as.ordered(vow_voi),
     speaker = as.factor(speaker),
     word = as.factor(word)
-  )
+  ) %>%
+  na.omit()
 
 contrasts(vowels$vowel) <- "contr.treatment"
 contrasts(vowels$voicing) <- "contr.treatment"
