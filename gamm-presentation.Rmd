@@ -736,56 +736,6 @@ plot_difference(vowel_gam, time_point, list(vow_voi = c("u.voiced", "u.voiceless
   labs(title = "Difference smooth of /u/ (voiced - voiceless)")
 ```
 
-## Residuals autocorrelation
-
-```{r bam-acf}
-acf_plot(resid(vowel_gam), split_by = list(vowels$index))
-```
-
-## Residuals autocorrelation
-
-```{r bam-start-event, echo=TRUE}
-vowels <- vowels %>%
-  arrange(speaker, index, time_point) %>%
-  create_event_start("index")
-```
-
-## Residuals autocorrelation
-
-```{r ar-gam, echo=TRUE, warning=FALSE}
-rho <- start_value_rho(vowel_gam)
-
-ar_gam <- bam(
-  f1 ~
-    vow_voi +
-    s(time_point, k = 6) +
-    s(time_point, k = 6, by = vow_voi) +
-    s(time_point, speaker, bs = "fs", m = 1),
-  data = vowels,
-  rho = rho,
-  AR.start = vowels$start.event
-)
-```
-
-## Residuals autocorrelation
-
-```{r ar-gam-plot}
-plot_smooths(ar_gam, time_point, voicing, vowel, split = list(vow_voi = c("vowel", "voicing")))
-```
-
-## Residuals autocorrelation
-
-```{r ar-gam-acf}
-acf_resid(ar_gam, split_pred = "AR.start")
-```
-
-## Residuals autocorrelation
-
-```{r ar-difference}
-plot_difference(ar_gam, time_point, list(vow_voi = c("u.voiced", "u.voiceless"))) +
-  labs(title = "Difference smooth of /u/ (voiced - voiceless)")
-```
-
 ## Hands on
 
 \Huge
