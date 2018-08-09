@@ -58,6 +58,19 @@ contrasts(vowels$place) <- "contr.treatment"
 contrasts(vowels$vow_voi) <- "contr.treatment"
 ```
 
+## Outline
+
+Part 1
+    - Linear models
+    - Introduction to GAM theory
+    - Comparing groups
+    - Significance testing
+
+Part 2
+    - Dynamic data
+    - Random effects
+    - Interactions
+
 ## Linear models
 
 \centering \Huge
@@ -274,7 +287,7 @@ ggplot(line, aes(x, y)) +
 
 * A spline is the sum of the products of each basis function and its coefficient
 
-## Basis functions
+## Basis functions and knots
 
 ```{r basis}
 par(mfrow = c(1, 2))
@@ -338,20 +351,27 @@ lines(
 
 ```{r simple-10, echo = TRUE}
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+```
+
+## A simple GAM
+
+\tiny
+
+```{r simple-10, echo = TRUE}
 summary(simple)
 ```
 
 ## A simple GAM
 
 ```{r simple-10-plot}
-plot(simple)
+plot_smooths(simple, x) + labs(title = "k = 10")
 ```
 
-## A simple GAM
+## A simple GAM:
 
 ```{r simple-5}
-simple <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
-plot(simple)
+simple_5 <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
+plot_smooths(simple_5, x) + labs(title = "k = 5")
 ```
 
 ## Comparing levels
