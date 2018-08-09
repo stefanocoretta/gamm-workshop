@@ -61,15 +61,17 @@ contrasts(vowels$vow_voi) <- "contr.treatment"
 ## Outline
 
 Part 1
-    - Linear models
-    - Introduction to GAM theory
-    - Comparing groups
-    - Significance testing
+
+  - Linear models
+  - Introduction to GAM theory
+  - Comparing groups
+  - Significance testing
 
 Part 2
-    - Dynamic data
-    - Random effects
-    - Interactions
+
+  - Dynamic data
+  - Random effects
+  - Interactions
 
 ## Linear models
 
@@ -347,17 +349,19 @@ lines(
 
 ## A simple GAM
 
-\tiny
-
 ```{r simple-10, echo = TRUE}
-simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+simple <- gam(
+  y ~ 
+    s(x, bs = "cr", k = 10),
+  data = sim_nl_a
+)
 ```
 
 ## A simple GAM
 
 \tiny
 
-```{r simple-10, echo = TRUE}
+```{r summary-10, echo = TRUE}
 summary(simple)
 ```
 
@@ -396,8 +400,11 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
 ```{r by-variables, echo = TRUE, eval=FALSE}
 compare <- gam(
   y ~
+    # parametric term
     group +
+    # reference smooth
     s(x, bs = "cr", k = 5) +
+    # difference smooth
     s(x, bs = "cr", k = 5, by = group),
   data = sim_nl
 )
@@ -427,8 +434,11 @@ library(mgcv)
 
 compare <- gam(
   y ~
+    # parametric term
     group +
+    # reference smooth
     s(x, bs = "cr", k = 5) +
+    # difference smooth
     s(x, bs = "cr", k = 5, by = group),
   data = sim_nl
 )
@@ -447,7 +457,11 @@ summary(compare)
 ```{r plot-smooth-fn, eval=FALSE, echo=TRUE}
 library(tidymv)
 
-plot_smooths(compare, x, group)
+plot_smooths(
+  model = compare,
+  time_series = x,
+  comparison = group
+)
 ```
 
 ## Comparing levels
@@ -472,7 +486,7 @@ plot_smooths(compare, x, group)
 \footnotesize
 
 ```{r ml, echo=TRUE, eval=FALSE}
-compare_1 <- gam(
+group_full <- gam(
   y ~
     group +
     s(x, bs = "cr", k = 5) +
@@ -481,7 +495,7 @@ compare_1 <- gam(
   method = "ML"
 )
 
-compare_0 <- gam(
+group_null <- gam(
   y ~
     s(x, bs = "cr", k = 5),
   data = sim_nl,
@@ -492,7 +506,7 @@ compare_0 <- gam(
 ## Significance testing
 
 ```{r compare-1-0}
-compare_1 <- gam(
+group_full <- gam(
   y ~
     group +
     s(x, bs = "cr", k = 5) +
@@ -501,7 +515,7 @@ compare_1 <- gam(
   method = "ML"
 )
 
-compare_0 <- gam(
+group_null <- gam(
   y ~
     s(x, bs = "cr", k = 5),
   data = sim_nl,
@@ -512,7 +526,7 @@ compare_0 <- gam(
 \footnotesize
 
 ```{r compare-ml, echo=TRUE}
-compareML(compare_0, compare_1)
+compareML(group_null, group_full)
 ```
 
 ## Significance testing
@@ -520,13 +534,17 @@ compareML(compare_0, compare_1)
 * Let's plot the difference smooth with `tidymv::plot_difference()`
 
 ```{r difference, echo=TRUE, eval=FALSE}
-plot_difference(compare, x, list(group = c("b", "a")))
+plot_difference(
+  model = group_full,
+  time_series = x,
+  comparison = list(group = c("b", "a"))
+)
 ```
 
 ## Significance testing
 
 ```{r plot-difference}
-plot_difference(compare, x, list(group = c("b", "a")))
+plot_difference(group_full, x, list(group = c("b", "a")))
 ```
 
 ## Hands on
