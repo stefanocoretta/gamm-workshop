@@ -40,7 +40,7 @@ contrasts(sim_data$focus_o) <- "contr.treatment"
 
 We will start by fitting a simple GAM to a big(ish) simulated dataset (*n* = 1000), `sim_data`. This dummy dataset includes measurements of **speech rate** and **fundamental frequency** (F0).[^1] We want to know what is the relationship between speech rate and F0. The fictional experiment also included two focus conditions: *focus* and *non-focus*. So we are particularly interested in weather the condition *focus* has an effect on the relationship between speech rate and F0.
 
-In this practical, we will build other model incrementally for pedagogical purpuses. In real life applications, you will prepare the data for fitting and start from a model with all of the terms you think are necessary.
+In this practical, we will build our models incrementally, for pedagogical purpuses. In real life applications, of course, you will prepare the data for fitting and start from a model with all of the terms you think are necessary.
 
 
 ### The data
@@ -68,6 +68,7 @@ We can model this non-linear increase in F0 using a GAM.
 Let's now fit a GAM to F0. We will use the package `mgcv` and the function `gam()` from that package to fit a GAM.
 
 Refresher:
+
 * `s()` defines a smooth (a curve) over a variable, in this case `speech_rate`
 * `bs` is used to select the type of *basis*
     * `tp` is a thin plate regression spline (and it is also the default)
@@ -109,13 +110,13 @@ F0_gam <- gam(
 )
 ```
 
-Let's now plot the model with `plot()`!
+Let's now plot the model with `plot_smooths()` from `tidymv`!
 
 ```{r plot-gam, exercise=TRUE, exercise.lines=1}
-plot(F0_gam)
+plot_smooths(F0_gam, speech_rate)
 ```
 
-If you want, try different basis and different values of k and plot the result in the following exercise.
+If you want, try different basis and different values of k and plot the result in the following exercise (in particular, try decreasing `k`).
 
 ```{r try, exercise=TRUE}
 F0_gam <- gam(
@@ -127,7 +128,7 @@ F0_gam <- gam(
   data = sim_data
 )
 
-plot(F0_gam)
+plot_smooths(F0_gam, speech_rate)
 ```
 
 [^1]: If you want to see the code for generating the data, look at the file `practical-1.Rmd`, in the `setup` chunk file.
@@ -141,7 +142,7 @@ plot(F0_gam)
 
 ### Prepare ordered factors
 
-What we are really interested in is to compare the effect of **speech rate** on F0 in the two focus conditions: *focus* and *non-focus*. We can do this by setting up a model using a `by` variable with an ordered factor. Remember that to use a `by` variable we need to create an ordered factor and change the contrasts to treatment (I did this for you already).
+What we are really interested in is to compare the effect of **speech rate** on **F0** in the two focus conditions: *focus* and *non-focus*. We can do this by setting up a model using a `by` variable with an ordered factor. Remember that to use a `by` variable we need to create an ordered factor and change the contrasts to treatment. I did this for you already, using the following code.
 
 ```{r ordered, echo=TRUE}
 sim_data <- sim_data %>%
@@ -208,3 +209,5 @@ focus_gam_null <- gam(
 
 compareML(focus_gam_null, focus_gam)
 ```
+
+Is there a significant difference between focus and non-focus?
