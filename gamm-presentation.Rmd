@@ -5,10 +5,14 @@ date: "12/07/2018"
 output:
   beamer_presentation:
     colortheme: spruce
+    citation_package: natbib
     highlight: tango
+    latex_engine: xelatex
     includes:
       in_header: header.tex
 fontsize: 10pt
+bibliography: linguistics.bib
+biblio-style: unified.bst
 ---
 
 ```{r setup, include=FALSE}
@@ -479,7 +483,9 @@ plot_smooths(compare, x, group)
     * visualisation of the difference smooth with `tidymv::plot_difference()`
         * (you can also use `itsadug::plot_diff()`)
 
-[say that you need to use ML]
+* Caveats
+    * models need to be fitted with `method = "ML"`
+    * only for testing fixed effects
 
 ## Significance testing
 
