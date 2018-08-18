@@ -46,4 +46,4 @@ f0_gam_4 <- bam(
   data = vowels
 )
 
-save(f0_gam, f0_gam_3, f0_gam_4, file = "./practicals/practical-2/www/practical-2.Rdata")
+save(vowels, f0_gam, f0_gam_3, f0_gam_4, file = "./practicals/practical-2/www/practical-2.Rdata")
