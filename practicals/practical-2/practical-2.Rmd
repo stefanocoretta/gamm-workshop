@@ -21,7 +21,7 @@ load("./www/practical-2.Rdata")
 
 ## Dynamic data: F0 trajectory
 
-In `Practical 1` we looked at F0 as a function of speech rate. In this practical, we will instead model F0 trajectories. F0 trajectories are a type of time series (dynamic) data.
+In `Practical 1` we looked at F0 as a function of speech rate. In this practical, we will instead model F0 trajectories. F0 trajectories are a type of dynamic data, in particular they are time series data.
 
 ### Revision
 
@@ -51,9 +51,9 @@ f0_gam <- bam(
 summary(f0_gam)
 ```
 
-And now let's plot the smooth with `plot()`.
+And now let's plot the smooth with `plot_smooths()`.
 
-```{r gam-plot, exercise=TRUE}
+```{r gam-plot, exercise=TRUE, exercise.lines=1}
 
 ```
 
@@ -98,7 +98,7 @@ quiz(
 
 ### Random smooth
 
-Let's add random smooths for `speaker` and `word`.
+Let's add random smooths for `speaker` and `word` and run the code (It might take a few seconds to run).
 
 ```{r gam-3, exercise=TRUE}
 f0_gam_3 <- bam(
@@ -109,12 +109,12 @@ f0_gam_3 <- bam(
     s(time_point, k = 6, by = vowel) +
     s(time_point, k = 6, by = voicing) +
     # your random smooths
-    s(time_point, ...) +
-    s(time_point, ...),
+    s(time_point, ..., ..., ...) +
+    s(time_point, ..., ..., ...),
   data = vowels
 )
 
-summary()
+summary(...)
 ```
 
 <div id="gam-3-hint">
@@ -148,13 +148,13 @@ plot_smooths(f0_gam_3, time_point, comparison = voicing, facet_terms = vowel)
 
 ## `by`-interactions
 
-In the previous models we were including `vowel` and `voicing` as factors in `by`-variable smooths. In this way, we are modelling their effect separately. When plotting the estimated smooths, the individual effects `vowel` and `voicing` are added up to each other (hence the 'additive' in generalised additive models).
+In the previous models we were including `vowel` and `voicing` as factors in `by`-variable smooths. In this way, we are modelling their effect separately. When plotting the estimated smooths, the individual effects `vowel` and `voicing` are added up to each other (hence the 'additive' part in 'generalised additive models').
 
 Most of the times we expect that, for example, different vowels behave differently with respect to other speech properties: what we are looking for is classic interactions.
 
-Classic interactions in GAMs (like the ones you add in `lmer` models with the colon `:` notation) can be included using `by`-variables. The factor in the `by`-variable is a interaction factor.
+Classic interactions in GAMs (like the ones you add in `lmer` models with the colon `:` notation) can be included using `by`-variables. The factor in the `by`-variable will be an interaction factor.
 
-You can create a interaction factor with `interaction()` (the factor needs to be an ordered factor with treatment contrasts, like any other `by`-variable factor). I have already done this for you with the following code.
+You can create an interaction factor using `interaction()` with the terms that constitute the interaction (in our case, vowel and voicing). The factor needs to be an ordered factor with treatment contrasts, like any other `by`-variable factor. I have already prepared the interaction factor for you with the following code.
 
 ```{r inter, echo=TRUE, eval=FALSE}
 vowels <- vowels %>%
@@ -171,7 +171,7 @@ contrasts(vowels$vow_voi) <- "contr.treatment"
 Now we can construct a model with an interaction between `vowel` and `voicing`.
 By including a `by`-interaction smooth, separate smooths will be fitted for each combination of `vowel` and `voicing`, allowing different effects of voicing on F0 by vowel.
 
-Add the necessary terms in the following exercise.
+Add the necessary terms in the following exercise (it will take a few seconds to run).
 
 ```{r f0-gam-4, exercise=TRUE}
 f0_gam_4 <- bam(
@@ -187,7 +187,7 @@ f0_gam_4 <- bam(
 summary(f0_gam_4)
 ```
 
-<div id="gam-3-hint">
+<div id="f0-gam-4-hint">
 Remember to include both a parametric term and a difference smooth.
 </div>
 
@@ -196,7 +196,13 @@ Remember to include both a parametric term and a difference smooth.
 Now we can plot the model with a `vowel:voicing` interaction. Since we are using a `by`-interaction, we need to specify the `split` argument in `plot_smooths()` (I added it for you), which splits the interaction back into the `vowel` and `voicing` factors.
 
 ```{r f0-gam-4-plot, exercise=TRUE}
-plot_smooths(f0_gam_4, ..., comparison = ..., facet_terms = ..., list(vow_voi = c("vowel", "voicing")))
+plot_smooths(
+  f0_gam_4,
+  time_series = ...,
+  comparison = ...,
+  facet_terms = ...,
+  split = list(vow_voi = c("vowel", "voicing"))
+)
 ```
 
 ```{r f0-gam-4-plot-solution}
