@@ -62,6 +62,16 @@ contrasts(vowels$place) <- "contr.treatment"
 contrasts(vowels$vow_voi) <- "contr.treatment"
 ```
 
+## Practical info
+
+- All materials available at <https://github.com/stefanocoretta/gamm-workshop>
+
+- Useful resources:
+    - Generalised additive mixed models for dynamic analysis in linguistics: a practical introduction, Márton Sóskuthy [<https://arxiv.org/abs/1703.05339>]
+    - Generalized additive modeling to analyze dynamic phonetic data: a tutorial focusing on articulatory differences between L1 and L2 speakers of English, Martijn Wieling [<https://doi.org/10.1016/j.wocn.2018.03.002>]
+    - How to analyze linguistic change using mixed models, Growth Curve Analysis and Generalized Additive Modeling, Bodo Winter and Martijn Wieling [<https://doi.org/10.1093/jole/lzv003>]
+    - Wood, Simon. 2006. *Generalized additive models: An introduction with R*. CRC Press
+
 ## Outline
 
 Part 1
