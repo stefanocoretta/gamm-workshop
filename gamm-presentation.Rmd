@@ -281,7 +281,7 @@ ggplot(line, aes(x, y)) +
     * `s(x)` in `R`
     * non-linear effects
 
-* `gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
+* `library(mgcv); gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
 
 ## Smoothing splines, basis, basis functions
 
@@ -382,14 +382,14 @@ simple_5 <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
 plot_smooths(simple_5, x) + labs(title = "k = 5")
 ```
 
-## Comparing levels
+## Comparing groups
 
 ```{r nl-plot}
 ggplot(sim_nl, aes(x, y, colour = group)) +
   geom_point()
 ```
 
-## Comparing levels
+## Comparing groups
 
 ```{r nl-smooth, message=FALSE}
 ggplot(sim_nl, aes(x, y, colour = group)) +
@@ -397,24 +397,21 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
   geom_smooth(se = FALSE)
 ```
 
-## Comparing levels
+## Comparing groups
 
 * `by`-variables with ordered factors
 
 ```{r by-variables, echo = TRUE, eval=FALSE}
 compare <- gam(
   y ~
-    # parametric term
     group +
-    # reference smooth
     s(x, bs = "cr", k = 5) +
-    # difference smooth
     s(x, bs = "cr", k = 5, by = group),
   data = sim_nl
 )
 ```
 
-## Comparing levels
+## Comparing groups
 
 * To use `by`-variables with ordered factors
     * change factor to **ordered factor**
@@ -423,7 +420,7 @@ compare <- gam(
     * include factor as **parametric term**
     * include a **reference smooth** and a **difference smooth** with the `by`-variable
 
-## Comparing levels
+## Comparing groups
 
 ```{r ordered, echo=TRUE}
 sim_nl <- sim_nl %>%
@@ -431,11 +428,9 @@ sim_nl <- sim_nl %>%
 contrasts(sim_nl$group) <- "contr.treatment"
 ```
 
-## Comparing levels
+## Comparing groups
 
 ```{r compare-gam, echo = TRUE}
-library(mgcv)
-
 compare <- gam(
   y ~
     # parametric term
@@ -448,7 +443,7 @@ compare <- gam(
 )
 ```
 
-## Comparing levels
+## Comparing groups
 
 \tiny
 
@@ -456,7 +451,7 @@ compare <- gam(
 summary(compare)
 ```
 
-## Comparing levels
+## Comparing groups
 
 ```{r plot-smooth-fn, eval=FALSE, echo=TRUE}
 library(tidymv)
@@ -468,7 +463,7 @@ plot_smooths(
 )
 ```
 
-## Comparing levels
+## Comparing groups
 
 ```{r plot-smooths}
 plot_smooths(compare, x, group)
@@ -485,7 +480,7 @@ plot_smooths(compare, x, group)
 
 * Caveats
     * models need to be fitted with `method = "ML"`
-    * only for testing fixed effects
+    * can test either fixed or random effects, not both at the same time
 
 ## Significance testing
 
