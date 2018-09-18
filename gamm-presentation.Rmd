@@ -658,7 +658,7 @@ plot_difference(big_gam, time_point, list(voicing = c("voiced", "voiceless"))) +
 
 * the random effect variable *needs to be a factor*
 
-* `s(time, speaker, bs = "f")`
+* `s(time, speaker, bs = "fs", m = 1)`
 
 ## Random effects
 
