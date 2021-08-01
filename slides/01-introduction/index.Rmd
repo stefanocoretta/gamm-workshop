@@ -1,0 +1,452 @@
+---
+title: "An introduction to GAM(M)s"
+subtitle: "Introduction"
+author: "Stefano Coretta"
+date: "2016/12/12 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir = here::here())
+library(tidyverse)
+theme_set(theme_minimal())
+library(mgcv)
+library(itsadug)
+library(tidymv)
+options(htmltools.dir.version = FALSE)
+```
+
+```{r data, message=FALSE}
+set.seed(8788)
+x <- seq(0,100,1)
+y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
+x_1 <- seq(0, 100, 1)
+y_1 <- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
+
+sim_nl <- tibble(
+  x = c(x, x_1),
+  y = c(y, y_1),
+  group = rep(c("a", "b"), each = 101)
+)
+
+sim_nl_a <- filter(sim_nl, group == "a")
+
+vowels <- read_csv("./data/vowels.csv") %>%
+  mutate(
+    vowel = as.ordered(vowel),
+    voicing = ordered(voicing, levels = c("voiceless", "voiced")),
+    place = as.ordered(place),
+    vow_voi = interaction(vowel, voicing),
+    vow_voi = as.ordered(vow_voi),
+    speaker = as.factor(speaker),
+    word = as.factor(word)
+  ) %>%
+  na.omit()
+
+contrasts(vowels$vowel) <- "contr.treatment"
+contrasts(vowels$voicing) <- "contr.treatment"
+contrasts(vowels$place) <- "contr.treatment"
+contrasts(vowels$vow_voi) <- "contr.treatment"
+```
+
+
+# Practical info
+
+- All materials available at <https://github.com/stefanocoretta/gamm-workshop>
+
+- Useful resources:
+    - Generalised additive mixed models for dynamic analysis in linguistics: a practical introduction, Márton Sóskuthy [<https://arxiv.org/abs/1703.05339>]
+    - Generalized additive modeling to analyze dynamic phonetic data: a tutorial focusing on articulatory differences between L1 and L2 speakers of English, Martijn Wieling [<https://doi.org/10.1016/j.wocn.2018.03.002>]
+    - How to analyze linguistic change using mixed models, Growth Curve Analysis and Generalized Additive Modeling, Bodo Winter and Martijn Wieling [<https://doi.org/10.1093/jole/lzv003>]
+    - Wood, Simon. 2006. *Generalized additive models: An introduction with R*. CRC Press
+
+---
+
+# Outline
+
+Part 1
+
+  - Linear models
+  - Introduction to GAM theory
+  - Comparing groups
+  - Significance testing
+
+Part 2
+
+  - Dynamic data
+  - Random effects
+  - Interactions
+
+---
+
+# Linear models
+
+\centering \Huge
+
+Time travel...
+
+---
+
+# Linear models
+
+\centering \Huge
+
+$y = 3 + 2x$
+
+\large
+
+where $x = (2, 4, 5, 8, 10, 23, 36)$
+
+---
+
+# Linear models
+
+```{r homework}
+line <- tibble(
+  x = c(2, 4, 5, 8, 10, 23, 36),
+  y = 3 + 2 * x
+)
+ggplot(line, aes(x, y)) +
+  geom_point() +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
+
+---
+
+# Linear models
+
+```{r line}
+ggplot(line, aes(x, y)) +
+  geom_point(colour = "gray") +
+  geom_line(colour = "red") +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
+
+---
+
+# Linear models
+
+* In science, we have $x$ and $y$...
+
+* for example, vowel duration and VOT, speech rate and pitch, etc...
+
+---
+
+# Linear models
+
+```{r sampled}
+set.seed(4321)
+x <- 1:10
+y <- (1 + 1.5 * x) + rnorm(10, 0, 1)
+
+line <- tibble(
+  x = x,
+  y = y
+)
+ggplot(line, aes(x, y)) +
+  geom_point() +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == "?" + "?" * italic(x)))
+```
+
+---
+
+# Linear models
+
+* The formula: $y = \beta_0 + \beta_1x$
+    * $\beta_0$ is the **intercept**
+    * $\beta_1$ is the **slope**
+
+* We know $x$ and $y$
+    * we need to estimate $\beta_0$, $\beta_1$ = $\hat{\beta_0}, \hat{\beta_1}$
+
+* We can add more predictors
+    * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
+
+* `lm(y ~ x, data)` ('$y$ as a function of $x$')
+
+---
+
+# Linear models
+
+```{r lm-plot}
+ggplot(line, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote({italic(y) == beta[0] + beta[1] * italic(x)} == 1 + 1.5 * italic(x)))
+```
+
+---
+
+# Linear models
+
+```{r error}
+m <- lm(y ~ x)
+yhat <- m$fitted.values
+diff <- y - yhat  
+ggplot(line, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + epsilon))
+```
+
+---
+
+# LM with non-linear data
+
+```{r plot-data}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point() +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+# LM with non-linear data
+
+```{r plot-lm}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+# LM with non-linear data
+
+```{r error-2}
+m <- lm(y ~ x, data = sim_nl_a)
+yhat <- m$fitted.values
+diff <- sim_nl_a$y - yhat  
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+# LM with non-linear data
+
+How to account for non-linearity in a linear model?
+
+* Use **higher-degree polynomials**
+    * quadratic: $y = \beta_0 + \beta_1x + \beta_2x^2$
+    * cubic: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3$
+    * $n$th: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n$
+
+---
+
+# LM with non-linear data
+
+```{r 2-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
+```
+
+---
+
+# LM with non-linear data
+
+---
+
+```{r 3-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
+```
+
+---
+
+# LM with non-linear data
+
+---
+
+```{r 10-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+```
+
+---
+
+# LM with non-linear data
+
+```{r 10-poly-2, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
+
+---
+
+# LM with non-linear data
+
+---
+
+```{r 10-poly-21, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
+
+---
+
+# Generalised additive models
+
+* **G**enrealised **A**dditive **M**odel**s**
+
+* $y = f(x) + \epsilon$
+    * $f(x)$ = 'some function of $x$' (or *smooth function*)
+
+---
+
+# Smooth terms
+
+* LMs have **parametric terms**
+    * $\beta_nx_n$
+    * `x` in `R`
+    * linear effects
+
+* GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers)
+    * $f(x)$
+    * `s(x)` in `R`
+    * non-linear effects
+
+* `library(mgcv); gam(y ~ s(x), data)`, '$y$ as *some* function of $x$'
+
+---
+
+# Smoothing splines, basis, basis functions
+
+* Smooths in GAMs are **smoothing splines**
+    * splines are defined piecewise with a set of polynomials
+
+* The set of polynomials is called a **basis**
+    * the basis is composed of **basis functions** (the polynomials)
+
+* A spline is the sum of the products of each basis function and its coefficient
+
+---
+
+# Basis functions and knots
+
+```{r basis}
+par(mfrow = c(1, 2))
+
+simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+
+X <- predict(
+  simple,
+  newdata = data.frame(x = sim_nl_a$x),
+  type = "lpmatrix"
+)[,2:10]
+
+plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-2, 3), xlab = "x", ylab = "y")
+for (i in 1:ncol(X)) {
+  lines(sim_nl_a$x, X[, i], col = i, lw = 1)
+}
+
+X2 <- X %*% diag(coef(simple)[2:10])
+plot(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  type = "n",
+  ylim = c(-8, 3),
+  xlab = "x", ylab = "y"
+)
+for (i in 1:ncol(X2)) {
+  lines(sim_nl_a$x, X2[, i], col = i, lw = 1)
+}
+lines(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  lw = 3
+)
+```
+
+---
+
+# Smoothing parameter
+
+* 'Wiggliness' is related to number of basis functions
+    * more basis functions, more wiggliness (less smoothing)
+
+* The **smoothing parameter** penalises wiggliness
+    * high values = less wiggliness (more smoothing)
+    * estimated from the data
+
+---
+
+# Smoothing splines
+
+* There are **several kinds** of splines
+    * each with their own basis functions
+
+* Most common
+    * *thin plate regression splines*
+    * *cubic regression splines*
+
+* For more info, run `?smooth.terms`
+
+---
+
+# A simple GAM
+
+```{r simple-10, echo = TRUE}
+simple <- gam(
+  y ~ 
+    s(x, bs = "cr", k = 10),
+  data = sim_nl_a
+)
+```
+
+---
+
+# A simple GAM
+
+\tiny
+
+```{r summary-10, echo = TRUE}
+summary(simple)
+```
+
+---
+
+# A simple GAM
+
+```{r simple-10-plot}
+plot_smooths(simple, x) + labs(title = "k = 10")
+```
+
+---
+
+# A simple GAM:
+
+```{r simple-5}
+simple_5 <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
+plot_smooths(simple_5, x) + labs(title = "k = 5")
+```

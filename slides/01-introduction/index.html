@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>An introduction to GAM(M)s</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Stefano Coretta" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# An introduction to GAM(M)s
+## Introduction
+### Stefano Coretta
+### 2016/12/12 (updated: 2021-08-01)
+
+---
+
+
+
+
+
+
+
+# Practical info
+
+- All materials available at &lt;https://github.com/stefanocoretta/gamm-workshop&gt;
+
+- Useful resources:
+    - Generalised additive mixed models for dynamic analysis in linguistics: a practical introduction, Márton Sóskuthy [&lt;https://arxiv.org/abs/1703.05339&gt;]
+    - Generalized additive modeling to analyze dynamic phonetic data: a tutorial focusing on articulatory differences between L1 and L2 speakers of English, Martijn Wieling [&lt;https://doi.org/10.1016/j.wocn.2018.03.002&gt;]
+    - How to analyze linguistic change using mixed models, Growth Curve Analysis and Generalized Additive Modeling, Bodo Winter and Martijn Wieling [&lt;https://doi.org/10.1093/jole/lzv003&gt;]
+    - Wood, Simon. 2006. *Generalized additive models: An introduction with R*. CRC Press
+
+---
+
+# Outline
+
+Part 1
+
+  - Linear models
+  - Introduction to GAM theory
+  - Comparing groups
+  - Significance testing
+
+Part 2
+
+  - Dynamic data
+  - Random effects
+  - Interactions
+
+---
+
+# Linear models
+
+\centering \Huge
+
+Time travel...
+
+---
+
+# Linear models
+
+\centering \Huge
+
+`\(y = 3 + 2x\)`
+
+\large
+
+where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
+
+---
+
+# Linear models
+
+![](index_files/figure-html/homework-1.png)&lt;!-- --&gt;
+
+---
+
+# Linear models
+
+![](index_files/figure-html/line-1.png)&lt;!-- --&gt;
+
+---
+
+# Linear models
+
+* In science, we have `\(x\)` and `\(y\)`...
+
+* for example, vowel duration and VOT, speech rate and pitch, etc...
+
+---
+
+# Linear models
+
+![](index_files/figure-html/sampled-1.png)&lt;!-- --&gt;
+
+---
+
+# Linear models
+
+* The formula: `\(y = \beta_0 + \beta_1x\)`
+    * `\(\beta_0\)` is the **intercept**
+    * `\(\beta_1\)` is the **slope**
+
+* We know `\(x\)` and `\(y\)`
+    * we need to estimate `\(\beta_0\)`, `\(\beta_1\)` = `\(\hat{\beta_0}, \hat{\beta_1}\)`
+
+* We can add more predictors
+    * `\(y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n\)`
+
+* `lm(y ~ x, data)` ('$y$ as a function of `\(x\)`')
+
+---
+
+# Linear models
+
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+![](index_files/figure-html/lm-plot-1.png)&lt;!-- --&gt;
+
+---
+
+# Linear models
+
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+![](index_files/figure-html/error-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+![](index_files/figure-html/plot-data-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+![](index_files/figure-html/plot-lm-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+![](index_files/figure-html/error-2-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+How to account for non-linearity in a linear model?
+
+* Use **higher-degree polynomials**
+    * quadratic: `\(y = \beta_0 + \beta_1x + \beta_2x^2\)`
+    * cubic: `\(y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3\)`
+    * `\(n\)`th: `\(y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n\)`
+
+---
+
+# LM with non-linear data
+
+![](index_files/figure-html/2-poly-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+---
+
+![](index_files/figure-html/3-poly-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+---
+
+![](index_files/figure-html/10-poly-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+![](index_files/figure-html/10-poly-2-1.png)&lt;!-- --&gt;
+
+---
+
+# LM with non-linear data
+
+---
+
+![](index_files/figure-html/10-poly-21-1.png)&lt;!-- --&gt;
+
+---
+
+# Generalised additive models
+
+* **G**enrealised **A**dditive **M**odel**s**
+
+* `\(y = f(x) + \epsilon\)`
+    * `\(f(x)\)` = 'some function of `\(x\)`' (or *smooth function*)
+
+---
+
+# Smooth terms
+
+* LMs have **parametric terms**
+    * `\(\beta_nx_n\)`
+    * `x` in `R`
+    * linear effects
+
+* GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers)
+    * `\(f(x)\)`
+    * `s(x)` in `R`
+    * non-linear effects
+
+* `library(mgcv); gam(y ~ s(x), data)`, '$y$ as *some* function of `\(x\)`'
+
+---
+
+# Smoothing splines, basis, basis functions
+
+* Smooths in GAMs are **smoothing splines**
+    * splines are defined piecewise with a set of polynomials
+
+* The set of polynomials is called a **basis**
+    * the basis is composed of **basis functions** (the polynomials)
+
+* A spline is the sum of the products of each basis function and its coefficient
+
+---
+
+# Basis functions and knots
+
+![](index_files/figure-html/basis-1.png)&lt;!-- --&gt;
+
+---
+
+# Smoothing parameter
+
+* 'Wiggliness' is related to number of basis functions
+    * more basis functions, more wiggliness (less smoothing)
+
+* The **smoothing parameter** penalises wiggliness
+    * high values = less wiggliness (more smoothing)
+    * estimated from the data
+
+---
+
+# Smoothing splines
+
+* There are **several kinds** of splines
+    * each with their own basis functions
+
+* Most common
+    * *thin plate regression splines*
+    * *cubic regression splines*
+
+* For more info, run `?smooth.terms`
+
+---
+
+# A simple GAM
+
+
+```r
+simple &lt;- gam(
+  y ~ 
+    s(x, bs = "cr", k = 10),
+  data = sim_nl_a
+)
+```
+
+---
+
+# A simple GAM
+
+\tiny
+
+
+```r
+summary(simple)
+```
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## y ~ s(x, bs = "cr", k = 10)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  10.1165     0.1028   98.37   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##        edf Ref.df     F p-value    
+## s(x) 6.939   8.01 38.69  &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.755   Deviance explained = 77.2%
+## GCV = 1.1593  Scale est. = 1.0681    n = 101
+```
+
+---
+
+# A simple GAM
+
+![](index_files/figure-html/simple-10-plot-1.png)&lt;!-- --&gt;
+
+---
+
+# A simple GAM:
+
+![](index_files/figure-html/simple-5-1.png)&lt;!-- --&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
