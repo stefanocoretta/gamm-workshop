@@ -78,6 +78,8 @@ Part 1
   - Comparing groups
   - Significance testing
 
+--
+
 Part 2
 
   - Dynamic data
@@ -87,8 +89,6 @@ Part 2
 ---
 
 # Linear models
-
-\centering \Huge
 
 Time travel...
 
