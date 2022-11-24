@@ -32,6 +32,7 @@ library(xaringanExtra)
 use_xaringan_extra(c("panelset", "tachyons", "freezeframe"))
 options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
 options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
+options(show.signif.stars = FALSE)
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}

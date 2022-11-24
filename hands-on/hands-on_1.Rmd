@@ -1,0 +1,101 @@
+---
+title: "Hands-on 1"
+author: "Stefano Coretta"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = here::here())
+library(tidyverse)
+theme_set(theme_light())
+options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
+options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
+library(mgcv)
+options(show.signif.stars = FALSE)
+library(tidygam)
+```
+
+## Read data
+
+For this hands-on, we will use data kindly offered by George Pontikas, Ian Cunnings, and Theodoros Marinis (<https://osf.io/4w693/>).
+
+Let's read it in and change a few things to make things easier later.
+
+```{r acch}
+acch <- read_delim("data/ACCH.txt") %>%
+  mutate(
+    StimSlide.RT = StimSlide.RT/1000,
+    RT_log = log(StimSlide.RT),
+    ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
+  )
+
+acch
+```
+
+For now we can focus on the following columns:
+
+- `Subject`: 
+- `Group`: 
+- `Trial`: 
+- `StimSlide.RT`: 
+
+
+
+
+## Fit a simple GAM
+
+In this practical, we will build our models incrementally, for pedagogical purposes. In real-life applications, of course, you will prepare the data for fitting and start from a model with all of the terms you think are necessary.
+
+Now let's plot the data.
+
+```{r acch-plot}
+acch %>%
+  ggplot(aes(Trial, RT_log)) +
+  geom_smooth(method = "gam", formula = y ~ s(x))
+```
+
+There is a clear non-linear relationship between trial number and logged reaction times: RTs decrease in the first fourth of the trials, they plateau in the second fourth, and increase again through out the second half of the trials.
+
+We are discarding for now differences between groups and other variables.
+
+### Fit a GAM
+
+Let's now fit a GAM to logged RTs. We use the `gam()` function from the package `mgcv` to fit a GAM.
+
+Quick refresher:
+
+* `s()` defines a smooth over a variable, in this case `Trial`.
+* `bs` is used to select the type of *basis*
+    * `tp` is a thin plate regression spline (and it is also the default).
+* `k` is dimension of the basis.
+
+```{r rt-gam}
+library(mgcv)
+
+rt_gam <- gam(
+  # The outcome variable: RT_log
+  RT_log ~
+    # A smooth for trial number
+    s(Trial, bs = "tp", k = 10),
+  # the data
+  data = acch
+)
+
+summary(rt_gam)
+```
+
+
+
+```{r}
+library(tidygam)
+
+rt_gam_preds <- predict_gam(rt_gam)
+rt_gam_preds
+```
+
+```{r}
+rt_gam_preds %>% plot(series = "Trial")
+```
+
