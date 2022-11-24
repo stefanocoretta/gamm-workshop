@@ -289,11 +289,126 @@ summary(simple)
 ---
 
 &lt;img src="index_files/figure-html/simple-5-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+layout: true
+
+## Comparing groups
+
+---
+
+&lt;img src="index_files/figure-html/nl-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/nl-smooth-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+* `by`-variables with ordered factors
+
+
+```r
+compare &lt;- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl
+)
+```
+
+---
+
+To use `by`-variables with ordered factors:
+
+* Change factor to an **ordered factor**.
+
+* Change factor contrast to **treatment contrast** (`contr.treatment`).
+    * The default in ordered factors is `contr.poly`, this won't work.
+    
+* Include the factor as a **parametric term**.
+
+* Include a **reference smooth** and a **difference smooth** with the `by`-variable.
+
+---
+
+
+```r
+sim_nl &lt;- sim_nl %&gt;%
+  mutate(group_o = ordered(group, levels = c("a", "b")))
+contrasts(sim_nl$group_o) &lt;- "contr.treatment"
+```
+
+---
+
+
+```r
+compare &lt;- gam(
+  y ~
+    # parametric term
+    group_o +
+    # reference smooth
+    s(x, bs = "cr", k = 5) +
+    # difference smooth
+    s(x, bs = "cr", k = 5, by = group_o),
+  data = sim_nl
+)
+```
+
+---
+
+
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## y ~ group_o + s(x, bs = "cr", k = 5) + s(x, bs = "cr", k = 5, 
+##     by = group_o)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  10.1165     0.1096   92.34   &lt;2e-16 ***
+## group_ob     -2.4947     0.1549  -16.10   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##                 edf Ref.df     F p-value    
+## s(x)          4.000  4.000 64.99  &lt;2e-16 ***
+## s(x):group_ob 3.576  3.896 39.67  &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.873   Deviance explained = 87.8%
+## GCV = 1.2725  Scale est. = 1.2122    n = 202
+```
+
+---
+
+
+```r
+library(tidygam)
+predict_gam(compare, series = "x", length_out = 30) %&gt;% plot(comparison = "group_o")
+```
+
+&lt;img src="index_files/figure-html/plot-smooth-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+class: center middle inverse
+
+.f1[HANDS-ON]
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
-"slideNumberFormat": "%current%",
 "highlightStyle": "github",
 "highlightLines": true,
 "ratio": "16:9",

@@ -7,7 +7,6 @@ output:
   xaringan::moon_reader:
     css: xaringan-themer.css
     nature:
-      slideNumberFormat: "%current%"
       highlightStyle: github
       highlightLines: true
       ratio: 16:9
@@ -31,6 +30,8 @@ library(mgcv)
 library(tidygam)
 library(xaringanExtra)
 use_xaringan_extra(c("panelset", "tachyons", "freezeframe"))
+options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
+options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
@@ -404,3 +405,96 @@ predict_gam(simple, series = "x", length_out = 30) %>% plot()
 simple_5 <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
 predict_gam(simple_5, series = "x", length_out = 30) %>% plot()
 ```
+
+---
+
+layout: false
+layout: true
+
+## Comparing groups
+
+---
+
+```{r nl-plot}
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point(size = 4)
+```
+
+---
+
+```{r nl-smooth, message=FALSE}
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point(size = 4, alpha = 0.3) +
+  geom_smooth(se = FALSE, method = "gam")
+```
+
+---
+
+* `by`-variables with ordered factors
+
+```{r by-variables, echo=TRUE, eval=FALSE}
+compare <- gam(
+  y ~
+    group +
+    s(x, bs = "cr", k = 5) +
+    s(x, bs = "cr", k = 5, by = group),
+  data = sim_nl
+)
+```
+
+---
+
+To use `by`-variables with ordered factors:
+
+* Change factor to an **ordered factor**.
+
+* Change factor contrast to **treatment contrast** (`contr.treatment`).
+    * The default in ordered factors is `contr.poly`, this won't work.
+    
+* Include the factor as a **parametric term**.
+
+* Include a **reference smooth** and a **difference smooth** with the `by`-variable.
+
+---
+
+```{r ordered, echo=TRUE}
+sim_nl <- sim_nl %>%
+  mutate(group_o = ordered(group, levels = c("a", "b")))
+contrasts(sim_nl$group_o) <- "contr.treatment"
+```
+
+---
+
+```{r compare-gam, echo=TRUE}
+compare <- gam(
+  y ~
+    # parametric term
+    group_o +
+    # reference smooth
+    s(x, bs = "cr", k = 5) +
+    # difference smooth
+    s(x, bs = "cr", k = 5, by = group_o),
+  data = sim_nl
+)
+```
+
+---
+
+
+```{r compare-summary}
+summary(compare)
+```
+
+---
+
+```{r plot-smooth, echo=TRUE}
+library(tidygam)
+predict_gam(compare, series = "x", length_out = 30) %>% plot(comparison = "group_o")
+```
+
+---
+
+layout: false
+class: center middle inverse
+
+.f1[HANDS-ON]
