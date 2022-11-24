@@ -1,10 +1,8 @@
 ---
-title: "Presentation Ninja"
-subtitle: "&#x2694;&#xFE0F; xaringan +<br/>&#x1F60E; xaringanthemer"  
-author: 
-  - "Yihui Xie"
-  - "Garrick Aden-Buie"
-date: '`r Sys.Date()`'
+title: "Introduction to GAM(M)S"
+subtitle: "Generalised Additive (Mixed) Models"
+author: "Dr Stefano Coretta"
+date: "12 December 2022"
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -19,22 +17,390 @@ output:
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 knitr::opts_chunk$set(
-  fig.width=9, fig.height=3.5, fig.retina=3,
-  out.width = "100%",
+  fig.width=7, fig.height=5, fig.retina=3,
+  out.width = "60%", fig.align = "center",
   cache = FALSE,
-  echo = TRUE,
+  echo = FALSE,
   message = FALSE, 
   warning = FALSE,
   hiline = TRUE
 )
+library(tidyverse)
+theme_set(theme_light())
+library(mgcv)
+library(tidygam)
+library(xaringanExtra)
+use_xaringan_extra(c("panelset", "tachyons", "freezeframe"))
 ```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
-style_duo_accent(
-  primary_color = "#1381B0",
-  secondary_color = "#FF961C",
-  inverse_header_color = "#FFFFFF"
+style_mono_light()
+```
+
+```{r data, message=FALSE}
+set.seed(8788)
+x <- seq(0,100,1)
+y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
+x_1 <- seq(0, 100, 1)
+y_1 <- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
+
+sim_nl <- tibble(
+  x = c(x, x_1),
+  y = c(y, y_1),
+  group = rep(c("a", "b"), each = 101)
+)
+
+sim_nl_a <- filter(sim_nl, group == "a")
+```
+
+class: center middle inverse
+
+.f1[Time travel...]
+
+---
+
+layout: true
+
+## Linear models
+
+---
+
+$$y = 3 + 2x$$
+
+where $x = (2, 4, 5, 8, 10, 23, 36)$
+
+---
+
+```{r homework}
+line <- tibble(
+  x = c(2, 4, 5, 8, 10, 23, 36),
+  y = 3 + 2 * x
+)
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
+
+---
+
+```{r line}
+ggplot(line, aes(x, y)) +
+  geom_point(colour = "gray", size = 4) +
+  geom_line(colour = "red") +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
+
+---
+
+* In research contexts, we have $x$ and $y$.
+
+* For example, vowel duration and VOT, speech rate and pitch, etc.
+
+---
+
+```{r sampled}
+set.seed(4321)
+x <- 1:10
+y <- (1 + 1.5 * x) + rnorm(10, 0, 1)
+
+line <- tibble(
+  x = x,
+  y = y
+)
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == "?" + "?" * italic(x)))
+```
+
+---
+
+* The formula: $y = \beta_0 + \beta_1x$
+    * $\beta_0$ is the **intercept**
+    * $\beta_1$ is the **slope**
+
+--
+
+* We know $x$ and $y$.
+    * We need to estimate $\beta_0$, $\beta_1$ = $\hat{\beta_0}, \hat{\beta_1}$.
+
+--
+
+* We can add more predictors:
+    * $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n$
+
+--
+
+* `lm(y ~ x, data)` ($y$ as a function of $x$).
+
+---
+
+```{r lm-plot}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote({italic(y) == beta[0] + beta[1] * italic(x)} == 1 + 1.5 * italic(x)))
+```
+
+---
+
+```{r error}
+m <- lm(y ~ x)
+yhat <- m$fitted.values
+diff <- y - yhat  
+ggplot(line, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + epsilon))
+```
+
+---
+
+layout: false
+layout: true
+
+## LM with non-linear data
+
+---
+
+```{r plot-data}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+```{r plot-lm}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+```{r error-2}
+m <- lm(y ~ x, data = sim_nl_a)
+yhat <- m$fitted.values
+diff <- sim_nl_a$y - yhat  
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
+---
+
+How to account for non-linearity in a linear model?
+
+--
+
+* Use **higher-degree polynomials**
+    * quadratic: $y = \beta_0 + \beta_1x + \beta_2x^2$
+    * cubic: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3$
+    * $n$th: $y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n$
+
+---
+
+```{r 2-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
+```
+
+---
+
+```{r 3-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
+```
+
+---
+
+```{r 10-poly}
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+```
+
+---
+
+```{r 10-poly-2, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
+
+---
+
+```{r 10-poly-21, warning=FALSE}
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
+
+---
+
+layout: false
+
+## Generalised additive models
+
+* **G**enrealised **A**dditive **M**odel**s** (GAMs)
+
+* $y = f(x)$
+    * $f(x)$ = some function of $x$ (or *smooth function*)
+
+---
+
+## Smooth terms
+
+* LMs have **parametric terms**
+    * $\beta_nx_n$
+    * `x` in `R`
+    * For linear effects.
+
+--
+
+* GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers):
+    * $f(x)$
+    * `s(x)` in `R`
+    * For non-linear effects.
+
+--
+
+* `library(mgcv); gam(y ~ s(x), data)`: $y$ as *some* function of $x$
+
+---
+
+## Smoothing splines, basis, basis functions
+
+* Smooths in GAMs are **smoothing splines**.
+    * Splines are defined piecewise with a set of polynomials.
+
+--
+
+* The set of polynomials is called a **basis**.
+    * The basis is composed of **basis functions** (the polynomials).
+    * The number of basis functions is called the **dimension of the basis** (`k` in mgcv).
+
+--
+
+* A spline is the sum of the products of each basis function and its coefficient.
+
+---
+
+## Basis functions and knots
+
+```{r basis}
+par(mfrow = c(1, 2))
+
+simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+
+X <- predict(
+  simple,
+  newdata = data.frame(x = sim_nl_a$x),
+  type = "lpmatrix"
+)[,2:10]
+
+plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-2, 3), xlab = "x", ylab = "y")
+for (i in 1:ncol(X)) {
+  lines(sim_nl_a$x, X[, i], col = i, lw = 1)
+}
+
+X2 <- X %*% diag(coef(simple)[2:10])
+plot(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  type = "n",
+  ylim = c(-8, 3),
+  xlab = "x", ylab = "y"
+)
+for (i in 1:ncol(X2)) {
+  lines(sim_nl_a$x, X2[, i], col = i, lw = 1)
+}
+lines(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  lw = 3
 )
 ```
 
+---
+
+## Smoothing parameter
+
+* Wiggliness is related to **number of basis functions**.
+    * more basis functions, more wiggliness (less smoothing).
+
+--
+
+* The **smoothing parameter** penalises wiggliness.
+    * High values = less wiggliness (more smoothing).
+    * This is estimated from the data.
+
+---
+
+## Smoothing splines
+
+* There are **several kinds of splines**.
+    * Each has its own basis functions.
+
+* Most common splines:
+    * *Thin plate regression splines*.
+    * *Cubic regression splines*.
+
+* For more info, run `?smooth.terms`.
+
+---
+
+layout: true
+
+## A simple GAM
+
+---
+
+```{r simple-10, echo = TRUE}
+simple <- gam(
+  y ~ 
+    # Cubic regression spline.
+    # k is the dimension of the basis.
+    s(x, bs = "cr", k = 10),
+  data = sim_nl_a
+)
+```
+
+---
+
+```{r summary-10, echo = TRUE}
+summary(simple)
+```
+
+---
+
+```{r simple-10-plot}
+predict_gam(simple, series = "x", length_out = 30) %>% plot()
+```
+
+---
+
+```{r simple-5}
+simple_5 <- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
+predict_gam(simple_5, series = "x", length_out = 30) %>% plot()
+```

@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="" xml:lang="">
   <head>
-    <title>Presentation Ninja</title>
+    <title>Introduction to GAM(M)S</title>
     <meta charset="utf-8" />
-    <meta name="author" content="Yihui Xie" />
-    <meta name="author" content="Garrick Aden-Buie" />
-    <meta name="date" content="2022-11-23" />
+    <meta name="author" content="Dr Stefano Coretta" />
+    <meta name="date" content="2022-12-12" />
     <script src="index_files/header-attrs/header-attrs.js"></script>
+    <link href="index_files/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="index_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="index_files/panelset/panelset.js"></script>
+    <script src="index_files/freezeframe/freezeframe.min.js"></script>
+    <script src="index_files/xaringanExtra-freezeframe/freezeframe-init.js"></script>
+    <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -14,19 +19,16 @@
 class: center, middle, inverse, title-slide
 
 .title[
-# Presentation Ninja
+# Introduction to GAM(M)S
 ]
 .subtitle[
-## ⚔️ xaringan +<br/>😎 xaringanthemer
+## Generalised Additive (Mixed) Models
 ]
 .author[
-### Yihui Xie
-]
-.author[
-### Garrick Aden-Buie
+### Dr Stefano Coretta
 ]
 .date[
-### 2022-11-23
+### 12 December 2022
 ]
 
 ---
@@ -36,6 +38,257 @@ class: center, middle, inverse, title-slide
 
 
 
+
+
+class: center middle inverse
+
+.f1[Time travel...]
+
+---
+
+layout: true
+
+## Linear models
+
+---
+
+`$$y = 3 + 2x$$`
+
+where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
+
+---
+
+&lt;img src="index_files/figure-html/homework-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/line-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+* In research contexts, we have `\(x\)` and `\(y\)`.
+
+* For example, vowel duration and VOT, speech rate and pitch, etc.
+
+---
+
+&lt;img src="index_files/figure-html/sampled-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+* The formula: `\(y = \beta_0 + \beta_1x\)`
+    * `\(\beta_0\)` is the **intercept**
+    * `\(\beta_1\)` is the **slope**
+
+--
+
+* We know `\(x\)` and `\(y\)`.
+    * We need to estimate `\(\beta_0\)`, `\(\beta_1\)` = `\(\hat{\beta_0}, \hat{\beta_1}\)`.
+
+--
+
+* We can add more predictors:
+    * `\(y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n\)`
+
+--
+
+* `lm(y ~ x, data)` ($y$ as a function of `\(x\)`).
+
+---
+
+&lt;img src="index_files/figure-html/lm-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/error-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+layout: true
+
+## LM with non-linear data
+
+---
+
+&lt;img src="index_files/figure-html/plot-data-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/plot-lm-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/error-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+How to account for non-linearity in a linear model?
+
+--
+
+* Use **higher-degree polynomials**
+    * quadratic: `\(y = \beta_0 + \beta_1x + \beta_2x^2\)`
+    * cubic: `\(y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3\)`
+    * `\(n\)`th: `\(y = \beta_0 + \beta_1x + \beta_2x^2 + \beta_3x^3 + ... + \beta_nx^n\)`
+
+---
+
+&lt;img src="index_files/figure-html/2-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/3-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/10-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/10-poly-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/10-poly-21-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+
+## Generalised additive models
+
+* **G**enrealised **A**dditive **M**odel**s** (GAMs)
+
+* `\(y = f(x)\)`
+    * `\(f(x)\)` = some function of `\(x\)` (or *smooth function*)
+
+---
+
+## Smooth terms
+
+* LMs have **parametric terms**
+    * `\(\beta_nx_n\)`
+    * `x` in `R`
+    * For linear effects.
+
+--
+
+* GAMs add (non-parametric) **smooth terms** (or simply smooths, also smoothers):
+    * `\(f(x)\)`
+    * `s(x)` in `R`
+    * For non-linear effects.
+
+--
+
+* `library(mgcv); gam(y ~ s(x), data)`: `\(y\)` as *some* function of `\(x\)`
+
+---
+
+## Smoothing splines, basis, basis functions
+
+* Smooths in GAMs are **smoothing splines**.
+    * Splines are defined piecewise with a set of polynomials.
+
+--
+
+* The set of polynomials is called a **basis**.
+    * The basis is composed of **basis functions** (the polynomials).
+    * The number of basis functions is called the **dimension of the basis** (`k` in mgcv).
+
+--
+
+* A spline is the sum of the products of each basis function and its coefficient.
+
+---
+
+## Basis functions and knots
+
+&lt;img src="index_files/figure-html/basis-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Smoothing parameter
+
+* Wiggliness is related to **number of basis functions**.
+    * more basis functions, more wiggliness (less smoothing).
+
+--
+
+* The **smoothing parameter** penalises wiggliness.
+    * High values = less wiggliness (more smoothing).
+    * This is estimated from the data.
+
+---
+
+## Smoothing splines
+
+* There are **several kinds of splines**.
+    * Each has its own basis functions.
+
+* Most common splines:
+    * *Thin plate regression splines*.
+    * *Cubic regression splines*.
+
+* For more info, run `?smooth.terms`.
+
+---
+
+layout: true
+
+## A simple GAM
+
+---
+
+
+```r
+simple &lt;- gam(
+  y ~ 
+    # Cubic regression spline.
+    # k is the dimension of the basis.
+    s(x, bs = "cr", k = 10),
+  data = sim_nl_a
+)
+```
+
+---
+
+
+```r
+summary(simple)
+```
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## y ~ s(x, bs = "cr", k = 10)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  10.1165     0.1028   98.37   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##        edf Ref.df     F p-value    
+## s(x) 6.939   8.01 38.69  &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## R-sq.(adj) =  0.755   Deviance explained = 77.2%
+## GCV = 1.1593  Scale est. = 1.0681    n = 101
+```
+
+---
+
+&lt;img src="index_files/figure-html/simple-10-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/simple-5-1.png" width="60%" style="display: block; margin: auto;" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
