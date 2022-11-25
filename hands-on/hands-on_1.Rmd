@@ -36,13 +36,10 @@ acch
 
 For now we can focus on the following columns:
 
-- `Subject`: 
-- `Group`: 
-- `Trial`: 
-- `StimSlide.RT`: 
-
-
-
+- `Subject`: the subject ID.
+- `Group`: whether the subject is `monolingual` or `bilingual`.
+- `Trial`: the number of the trial.
+- `StimSlide.RT`: the reaction times in milliseconds.
 
 ## Fit a simple GAM
 
@@ -148,21 +145,21 @@ Note that the Confidence Intervals are Bayesian Credible Intervals. This means t
 You can adjust the resolution (number of points) of the predicted smooth by specifying the `length_out` argument in `predict_gam()`.
 Higher `length_out` values make the smooth look smoother. Note that this is independent of the smooth's smoothness parameter, and just affects plotting.
 
-```{r rt-gam-plot}
+```{r rt-gam-plot-2}
 rt_gam_preds_2 <- predict_gam(rt_gam, length_out = 20) %>% plot(series = "Trial")
 rt_gam_preds_2
 ```
 
 Plotting the output of `predict_gam()` returns a ggplot object, which you can further modify using ggplot2 functions:
 
-```{r}
+```{r rt-gam-plot-3}
 rt_gam_preds_2 +
   labs(title = "Predicted log RTs by trial")
 ```
 
 For more control, you can simply plot the predicted values using `ggplot()` as you would do with any other tibble.
 
-```{r}
+```{r rt-gam-plot-4}
 rt_gam_preds %>%
   ggplot(aes(Trial, RT_log)) +
   geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2, fill = "#1B9E77") +
@@ -176,7 +173,7 @@ rt_gam_preds %>%
 
 Let's compare monolingual vs bilingual participants. We can do this by setting up a model using a `by`-variable with `Group` as an ordered factor. Remember that to use a `by`-variable we need to create an ordered factor and change the contrasts to treatment.
 
-We can achieve that with the following code
+We can achieve that with the following code.
 
 ```{r ordered}
 acch <- acch %>%
@@ -210,9 +207,63 @@ rt_gam_2 <- gam(
 summary(rt_gam_2)
 ```
 
-And finally let's plot the estimated smooths.
+The summary structure is the same as before, but now we also have a parametric effect for `Group_o = bilingual` (think of this as the mean difference between log RTs of bilingual vs monolingual subjects).
+
+The parametric term `Group_obilingual` indicates that on average log RT are 0.03 logs longer in the bilingual group compared to the monolingual group. This is a significant effect according to the reported *p*-value (*p* = 0.0104).
+
+Parametric terms like `Intercept` and `Group_obilingual` basically model the **height** of the predicted smooth (for the monolingual and bilingual participants).
+
+The **shape** of the smooth is modelled by the smooth terms.
+
+Moving onto the smooth terms, now we have two terms:
+
+- `s(Trial)` is our **reference smooth** (i.e. the smooth for monolingual subjects, since `monolingual` is the reference level of `Group_o`).
+
+- `s(Trial):Group_obilingual` is the **difference smooth**. This corresponds to the predicted difference (smooth) between the `bilingual` and the `monolingual` smooths.
+
+When the difference smooth EDF are significantly different from 1, then the model indicates that the shape of the smooth for that level is significantly different from the shape of the reference level, when controlling for the difference in height (which is modelled by the parametric effects).
+
+Since the approximate *p*-value for `s(Trial):Group_obilingual` is 0.3749, above the 0.05 threshold, the model indicates that the *shape* of the smooth for bilingual participants is not significantly different from that of monolingual participants.
+
+In other words, while the average log RTs are different in mono vs bilingual subjects, the effect of trial is suggested to be similar if not identical in both groups.
+
+### Plot the model predictions
+
+Let's plot the estimated smooths to see what all that means in practice.
+
+We can use the `comparison` argument in `plot()` to colour the two levels in `Group_o`.
 
 ```{r rt-gam-2-plot}
-predict_gam(rt_gam_2, series = "Trial") %>%
+predict_gam(rt_gam_2, length_out = 30, series = "Trial") %>%
   plot(comparison = "Group_o")
 ```
+
+## Exercise 1
+
+Now try this yourself! This time run a GAM with `Structure` as a `by`-variable instead of `Group_o`.
+
+Remember that you first have to mutate `Structure` into an **ordered factor** and change the **contrasts to treatment**.
+
+Do this here:
+
+```{r structure-o}
+acch <- acch %>%
+  mutate(
+    
+  )
+```
+
+Now fit a GAM and print the summary.
+
+```{r rt-gam-3}
+
+```
+
+What can you tell about the effect of `Structure` based on the summary?
+
+Plot the predicted smooths to see if your intuitions match what the plot suggests.
+
+```{r rt-gam-3-plot}
+
+```
+
