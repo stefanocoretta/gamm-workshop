@@ -60,7 +60,7 @@ There is a clear non-linear relationship between trial number and logged reactio
 
 We are discarding for now differences between groups and other variables.
 
-### Fit a GAM
+### Fit the GAM
 
 Let's now fit a GAM to logged RTs. We use the `gam()` function from the package `mgcv` to fit a GAM.
 
@@ -86,16 +86,133 @@ rt_gam <- gam(
 summary(rt_gam)
 ```
 
+The model summary is made of different parts:
 
+- **Family and Link function**
+  - They report the distribution family and link used in the model. Here, that is Gaussian with an identity link.
+- **Formula**
+  - The model formula.
+  
+- **Parametric coefficients**
+  - The estimated coefficients of the parametric (linear) terms. Here, just the intercept.
+  - The parametric intercept can be thought of as the overall mean across all trials.
 
-```{r}
+- **Approximate significance of smooth terms**
+  - Here, the statistical significance of smooth terms is reported. Note that for smooth terms you don't get a summary like you do for parametric terms.
+  - `edf` are the Estimated Degrees of Freedom. This measure is related to the number of basis functions selected for that particular term and also takes into account the smoothing penalty.
+  - An EDF of 1 means that the model estimated the effect of that smooth to be linear (a straight line) rather than non-linear.
+  - An EDF above 1 mean that the model estimated the effect to be non-linear.
+  - The *p*-value indicates if the EDF is significantly different from 1 (rather than 0).
+  - *p*-values below 0.05 indicate that the estimated effect is significantly different from a linear effect.
+  
+- **Further model info**
+  - R^2 and deviance explained are two measures of model goodness.
+    - Deviance explained is more robust than R^2.
+  - GCV and scale are specific model parameters.
+    - The GCV score is the minimised generalised cross-validation (GCV) score of the GAM fitted. GCV is used for smoothness selection.
+    - The scale is the squared residual standard error for Gaussian models.
+    - For a more technical explanation, see <https://stats.stackexchange.com/a/191235/128897>.
+  - N is the sample size.
+
+In summary, the simple model indicates that the overall mean RT is 1.6 log RT and that the effect of trial number on RT is non-linear.
+
+To know more about the predicted values, we need to plot them.
+
+### Get model predictions and plot them
+
+Model predictions can be conveniently extracted with the tidygam package (under development here: <https://github.com/stefanocoretta/tidygam>).
+
+You can install the development version with `remotes::install_github("stefanocoretta/tidygam@devel")` (you also need the remotes package).
+
+The `predict_gam()` function extracts predictions based on all the predictors in the model (all levels are included for categorical predictors and a range of values are selected for numeric predictors). It returns a tibble.
+
+The standard error and lower and upper Confidence Interval boundaries are also returned.
+
+```{r rt-gam-preds}
 library(tidygam)
 
 rt_gam_preds <- predict_gam(rt_gam)
 rt_gam_preds
 ```
 
-```{r}
+We can easily plot the model predictions with the `plot()` function.
+
+You need to specify the series (*x*-axis) for plotting. Here, that is `Trial`.
+
+```{r rt-gam-plot}
 rt_gam_preds %>% plot(series = "Trial")
 ```
 
+Note that the Confidence Intervals are Bayesian Credible Intervals. This means that they can be interpreted as such: A 95% Bayesian Credible Interval indicates the range within which we can be 95% confident the real value lies. (This is different from a frequentist Confidence Interval, which is very often misinterpreted as a Bayesian Credible Interval.)
+
+You can adjust the resolution (number of points) of the predicted smooth by specifying the `length_out` argument in `predict_gam()`.
+Higher `length_out` values make the smooth look smoother. Note that this is independent of the smooth's smoothness parameter, and just affects plotting.
+
+```{r rt-gam-plot}
+rt_gam_preds_2 <- predict_gam(rt_gam, length_out = 20) %>% plot(series = "Trial")
+rt_gam_preds_2
+```
+
+Plotting the output of `predict_gam()` returns a ggplot object, which you can further modify using ggplot2 functions:
+
+```{r}
+rt_gam_preds_2 +
+  labs(title = "Predicted log RTs by trial")
+```
+
+For more control, you can simply plot the predicted values using `ggplot()` as you would do with any other tibble.
+
+```{r}
+rt_gam_preds %>%
+  ggplot(aes(Trial, RT_log)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2, fill = "#1B9E77") +
+  geom_line(colour = "#1B9E77", linewidth = 1.5)
+```
+
+
+## Compare monolinguals vs bilinguals
+
+### Prepare ordered factors
+
+Let's compare monolingual vs bilingual participants. We can do this by setting up a model using a `by`-variable with `Group` as an ordered factor. Remember that to use a `by`-variable we need to create an ordered factor and change the contrasts to treatment.
+
+We can achieve that with the following code
+
+```{r ordered}
+acch <- acch %>%
+  mutate(
+    Group_o = ordered(Group, levels = c("monolingual", "bilingual"))
+  )
+contrasts(acch$Group_o) <- "contr.treatment"
+```
+
+Check the `acch` tibble in the Environment tab of the top-right panel in RStudio. If you click on the blue arrow button next to the tibble name, you'll see the new `Group_o` column: it is an `Ord.factor` and has `contr.treatment` as the `contrasts` attribute.
+
+### Use the `by`-variable
+
+We can now fit a GAM using a smooth with a `by`-variable.
+
+To do so, we need to add `Group_o` as a parametric term, include a smooth without the `by`-variable (the reference smooth) and one with it (the difference smooth).
+
+```{r rt-gam-2}
+rt_gam_2 <- gam(
+  # the outcome variable: RT_log
+  RT_log ~
+    # the parametric term
+    Group_o +
+    # the reference smooth
+    s(Trial, bs = "cr", k = 10) +
+    # the difference smooth
+    s(Trial, by = Group_o, bs = "cr", k = 10),
+  # the data
+  data = acch
+)
+summary(rt_gam_2)
+```
+
+And finally let's plot the estimated smooths.
+
+```{r rt-gam-2-plot}
+predict_gam(rt_gam_2, series = "Trial") %>%
+  plot(comparison = "Group_o")
+```
