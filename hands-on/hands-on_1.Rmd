@@ -166,6 +166,9 @@ rt_gam_preds %>%
   geom_line(colour = "#1B9E77", linewidth = 1.5)
 ```
 
+### Reporting
+
+TODO
 
 ## Compare monolinguals vs bilinguals
 
@@ -237,6 +240,10 @@ We can use the `comparison` argument in `plot()` to colour the two levels in `Gr
 predict_gam(rt_gam_2, length_out = 30, series = "Trial") %>%
   plot(comparison = "Group_o")
 ```
+
+### Reporting
+
+TODO
 
 ## Exercise 1
 

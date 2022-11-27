@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   hiline = TRUE
 )
+knitr::opts_knit$set(root.dir = here::here())
 library(tidyverse)
 theme_set(theme_light())
 library(mgcv)
@@ -498,4 +499,108 @@ predict_gam(compare, series = "x", length_out = 30) %>% plot(comparison = "group
 layout: false
 class: center middle inverse
 
-.f1[HANDS-ON]
+.f1[HANDS-ON 1]
+
+---
+
+layout: true
+
+## Comparing across groups (interactions)
+
+* Technically, GAMs **don't allow interactions**.
+
+  * They are ADDITIVE (interactions require multiplication).
+
+--
+
+* We can get interaction-like comparisons by creating **factor interactions** and using them as `by`-variables.
+
+---
+
+Let's use the ACCH data frame from the hands-on.
+
+```{r acch}
+acch <- read_delim("data/ACCH.txt") %>%
+  mutate(
+    StimSlide.RT = StimSlide.RT/1000,
+    RT_log = log(StimSlide.RT),
+    ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
+  )
+
+acch
+```
+
+---
+
+Now, let's create a faction interaction between `Group` and `Structure`.
+
+We also need to make it into an ordered factor with treatment contrasts.
+
+```{r acch-gr-st}
+acch <- acch %>%
+  mutate(
+    Gr_St = as.ordered(interaction(Group, Structure))
+  )
+contrasts(acch$Gr_St) <- "contr.treatment"
+
+head(acch$Gr_St)
+```
+
+---
+
+```{r rt-gam}
+rt_gam <- gam(
+  RT_log ~ Gr_St + s(Trial) + s(Trial, by = Gr_St),
+  data = acch
+)
+```
+
+---
+
+```{r rt-gam-summ}
+summary(rt_gam)
+```
+
+---
+
+```{r rt-gam-plot}
+# library(tidygam)
+predict_gam(rt_gam, series = "Trial", length_out = 50) %>%
+  plot(comparison = "Gr_St")
+```
+
+---
+
+```{r rt-gam-plot-2}
+predict_gam(rt_gam, series = "Trial", length_out = 50,
+            separate = list(Gr_St = c("Group", "Structure"))) %>%
+  plot(comparison = "Group") +
+  facet_grid(Structure ~ .)
+```
+
+---
+
+```{r}
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))
+) %>%
+  plot()
+```
+
+---
+
+```{r}
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
+) %>%
+  plot()
+```
+
+---
+
+```{r}
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
+) %>%
+  plot()
+```
