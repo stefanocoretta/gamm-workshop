@@ -499,7 +499,7 @@ predict_gam(compare, series = "x", length_out = 30) %>% plot(comparison = "group
 layout: false
 class: center middle inverse
 
-.f1[HANDS-ON 1]
+# HANDS-ON 1
 
 ---
 
@@ -532,7 +532,7 @@ acch
 
 ---
 
-Now, let's create a faction interaction between `Group` and `Structure`.
+Now, let's create a factor interaction between `Group` and `Structure`.
 
 We also need to make it into an ordered factor with treatment contrasts.
 
@@ -604,3 +604,84 @@ get_difference(
 ) %>%
   plot()
 ```
+
+---
+
+layout: false
+layout: true
+
+## Tensor product smooths and interactions
+
+---
+
+|                 | LM      | GAM                    |
+|-----------------|---------|------------------------|
+| Num × cat       | `num:cat` | `s(num, by = "cat")`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = "cat_cat")` |
+
+---
+
+|                 | LM      | GAM                    |
+|-----------------|---------|------------------------|
+| Num × cat       | `num:cat` | `s(num, by = cat)`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = cat_cat)` |
+| Num × num       | `num:num` | `te(num, num)`           |
+| Num × num × cat | `num:num:cat` | `te(num, num, by = cat)` |
+
+---
+
+* **Tensor product smooths** are smooths that create interactions between two numeric predictors.
+
+* Tensor product smooths are specified with `te()` or `ti()`.
+
+  * `ti(x) + ti(y) + ti(x, y)`.
+  * `te(x, y)`.
+
+---
+
+```{r}
+vowels <- read_csv("data/vowels.csv")
+vowels
+```
+
+
+---
+
+```{r acc-rt-gam}
+f0_gam <- gam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration),
+  data = vowels
+)
+```
+
+---
+
+```{r}
+predict_gam(f0_gam) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+---
+
+```{r}
+predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+---
+
+```{r}
+predict_gam(f0_gam) %>%
+  plot(
+    series = c("time_point", "duration"),
+    raster_interp = TRUE
+  )
+```
+
+---
+
+layout: false
+class: center middle inverse
+
+# HANDS-ON 2
