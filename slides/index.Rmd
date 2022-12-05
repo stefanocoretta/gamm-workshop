@@ -2,7 +2,7 @@
 title: "Introduction to GAM(M)S"
 subtitle: "Generalised Additive (Mixed) Models"
 author: "Dr Stefano Coretta"
-date: "12 December 2022"
+date: "12-15 December 2022"
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
@@ -38,7 +38,7 @@ options(show.signif.stars = FALSE)
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
-style_mono_light()
+style_mono_light(outfile = "slides/xaringan-themer.css")
 ```
 
 ```{r data, message=FALSE}
@@ -580,7 +580,7 @@ predict_gam(rt_gam, series = "Trial", length_out = 50,
 
 ---
 
-```{r}
+```{r rt-gam-diff}
 get_difference(
   rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))
 ) %>%
@@ -589,7 +589,7 @@ get_difference(
 
 ---
 
-```{r}
+```{r rt-gam-diff-2}
 get_difference(
   rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
 ) %>%
@@ -598,7 +598,7 @@ get_difference(
 
 ---
 
-```{r}
+```{r rt-gam-diff-3}
 get_difference(
   rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
 ) %>%
@@ -639,7 +639,7 @@ layout: true
 
 ---
 
-```{r}
+```{r vowels}
 vowels <- read_csv("data/vowels.csv")
 vowels
 ```
@@ -647,7 +647,7 @@ vowels
 
 ---
 
-```{r acc-rt-gam}
+```{r f0-gam}
 f0_gam <- gam(
   f0 ~ 
     ti(time_point) + ti(duration) + ti(time_point, duration),
@@ -657,21 +657,21 @@ f0_gam <- gam(
 
 ---
 
-```{r}
+```{r f0-gam-plot}
 predict_gam(f0_gam) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r}
+```{r f0-gam-plot-2}
 predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r}
+```{r f0-gam-plot-3}
 predict_gam(f0_gam) %>%
   plot(
     series = c("time_point", "duration"),

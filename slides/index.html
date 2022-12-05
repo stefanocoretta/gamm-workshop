@@ -4,7 +4,6 @@
     <title>Introduction to GAM(M)S</title>
     <meta charset="utf-8" />
     <meta name="author" content="Dr Stefano Coretta" />
-    <meta name="date" content="2022-12-12" />
     <script src="index_files/header-attrs/header-attrs.js"></script>
     <link href="index_files/tachyons/tachyons.min.css" rel="stylesheet" />
     <link href="index_files/panelset/panelset.css" rel="stylesheet" />
@@ -28,7 +27,7 @@ class: center, middle, inverse, title-slide
 ### Dr Stefano Coretta
 ]
 .date[
-### 12 December 2022
+### 12-15 December 2022
 ]
 
 ---
@@ -267,16 +266,12 @@ summary(simple)
 ## y ~ s(x, bs = "cr", k = 10)
 ## 
 ## Parametric coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  10.1165     0.1028   98.37   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)  10.1165     0.1028   98.37   &lt;2e-16
 ## 
 ## Approximate significance of smooth terms:
-##        edf Ref.df     F p-value    
-## s(x) 6.939   8.01 38.69  &lt;2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##        edf Ref.df     F p-value
+## s(x) 6.939   8.01 38.69  &lt;2e-16
 ## 
 ## R-sq.(adj) =  0.755   Deviance explained = 77.2%
 ## GCV = 1.1593  Scale est. = 1.0681    n = 101
@@ -372,18 +367,14 @@ compare &lt;- gam(
 ##     by = group_o)
 ## 
 ## Parametric coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  10.1165     0.1096   92.34   &lt;2e-16 ***
-## group_ob     -2.4947     0.1549  -16.10   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)  10.1165     0.1096   92.34   &lt;2e-16
+## group_ob     -2.4947     0.1549  -16.10   &lt;2e-16
 ## 
 ## Approximate significance of smooth terms:
-##                 edf Ref.df     F p-value    
-## s(x)          4.000  4.000 64.99  &lt;2e-16 ***
-## s(x):group_ob 3.576  3.896 39.67  &lt;2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##                 edf Ref.df     F p-value
+## s(x)          4.000  4.000 64.99  &lt;2e-16
+## s(x):group_ob 3.576  3.896 39.67  &lt;2e-16
 ## 
 ## R-sq.(adj) =  0.873   Deviance explained = 87.8%
 ## GCV = 1.2725  Scale est. = 1.2122    n = 202
@@ -404,7 +395,190 @@ predict_gam(compare, series = "x", length_out = 30) %&gt;% plot(comparison = "gr
 layout: false
 class: center middle inverse
 
-.f1[HANDS-ON]
+# HANDS-ON 1
+
+---
+
+layout: true
+
+## Comparing across groups (interactions)
+
+* Technically, GAMs **don't allow interactions**.
+
+  * They are ADDITIVE (interactions require multiplication).
+
+--
+
+* We can get interaction-like comparisons by creating **factor interactions** and using them as `by`-variables.
+
+---
+
+Let's use the ACCH data frame from the hands-on.
+
+
+```
+## # A tibble: 4,796 × 13
+##    Subject Group       Trial Condi…¹  item Remove StimS…² StimS…³ Struc…⁴ Number
+##      &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; 
+##  1     202 monolingual     1       1     1 no           1    6.21 Subject Match 
+##  2     202 monolingual     1       1     2 no           1    3.89 Subject Match 
+##  3     202 monolingual    15       1     3 no           0    4.37 Subject Match 
+##  4     202 monolingual    26       1     4 no           1    3.70 Subject Match 
+##  5     202 monolingual    15       1     5 no           1    5.63 Subject Match 
+##  6     202 monolingual    33       1     6 no           1    3.78 Subject Match 
+##  7     202 monolingual    23       1     7 no           1    4.68 Subject Match 
+##  8     202 monolingual    26       1     8 no           1    3.78 Subject Match 
+##  9     202 monolingual    28       1     9 no           1    4.21 Subject Match 
+## 10     202 monolingual    24       1    10 no           1    5.42 Subject Match 
+## # … with 4,786 more rows, 3 more variables: First_NP &lt;chr&gt;, RT_log &lt;dbl&gt;,
+## #   ACC &lt;chr&gt;, and abbreviated variable names ¹​Condition, ²​StimSlide.ACC,
+## #   ³​StimSlide.RT, ⁴​Structure
+```
+
+---
+
+Now, let's create a factor interaction between `Group` and `Structure`.
+
+We also need to make it into an ordered factor with treatment contrasts.
+
+
+```
+## [1] monolingual.Subject monolingual.Subject monolingual.Subject
+## [4] monolingual.Subject monolingual.Subject monolingual.Subject
+## attr(,"contrasts")
+## [1] contr.treatment
+## 4 Levels: bilingual.Object &lt; monolingual.Object &lt; ... &lt; monolingual.Subject
+```
+
+---
+
+
+
+---
+
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## RT_log ~ Gr_St + s(Trial) + s(Trial, by = Gr_St)
+## 
+## Parametric coefficients:
+##                          Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)               1.64593    0.01194 137.842  &lt; 2e-16
+## Gr_Stmonolingual.Object  -0.04542    0.01562  -2.908  0.00365
+## Gr_Stbilingual.Subject   -0.09169    0.01678  -5.466 4.85e-08
+## Gr_Stmonolingual.Subject -0.10281    0.01551  -6.629 3.76e-11
+## 
+## Approximate significance of smooth terms:
+##                                     edf Ref.df     F p-value
+## s(Trial)                          1.000  1.000 1.110   0.292
+## s(Trial):Gr_Stmonolingual.Object  4.026  4.966 1.115   0.328
+## s(Trial):Gr_Stbilingual.Subject   3.285  4.070 1.830   0.125
+## s(Trial):Gr_Stmonolingual.Subject 2.342  2.918 1.938   0.122
+## 
+## R-sq.(adj) =  0.0145   Deviance explained = 1.73%
+## GCV = 0.13978  Scale est. = 0.13935   n = 4796
+```
+
+---
+
+&lt;img src="index_files/figure-html/rt-gam-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/rt-gam-plot-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/rt-gam-diff-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/rt-gam-diff-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/rt-gam-diff-3-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+layout: true
+
+## Tensor product smooths and interactions
+
+---
+
+|                 | LM      | GAM                    |
+|-----------------|---------|------------------------|
+| Num × cat       | `num:cat` | `s(num, by = "cat")`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = "cat_cat")` |
+
+---
+
+|                 | LM      | GAM                    |
+|-----------------|---------|------------------------|
+| Num × cat       | `num:cat` | `s(num, by = cat)`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = cat_cat)` |
+| Num × num       | `num:num` | `te(num, num)`           |
+| Num × num × cat | `num:num:cat` | `te(num, num, by = cat)` |
+
+---
+
+* **Tensor product smooths** are smooths that create interactions between two numeric predictors.
+
+* Tensor product smooths are specified with `te()` or `ti()`.
+
+  * `ti(x) + ti(y) + ti(x, y)`.
+  * `te(x, y)`.
+
+---
+
+
+```
+## # A tibble: 11,565 × 12
+##    speaker index    word  time_p…¹    f1    f2    f3    f0 durat…² vowel voicing
+##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  
+##  1 it01    it01-001 pugu         1  308.  797. 2280.  137.    95.2 u     voiced 
+##  2 it01    it01-001 pugu         2  315.  779. 2124.  134.    95.2 u     voiced 
+##  3 it01    it01-001 pugu         3  316.  786. 2314.  134.    95.2 u     voiced 
+##  4 it01    it01-001 pugu         4  314.  789. 2374.  135.    95.2 u     voiced 
+##  5 it01    it01-001 pugu         5  313.  737. 2307.  137.    95.2 u     voiced 
+##  6 it01    it01-001 pugu         6  305.  717. 2315.  138.    95.2 u     voiced 
+##  7 it01    it01-001 pugu         7  291.  713. 2318.  138.    95.2 u     voiced 
+##  8 it01    it01-001 pugu         8  280.  733. 2308.  137.    95.2 u     voiced 
+##  9 it01    it01-001 pugu         9  287.  784. 2329.  136.    95.2 u     voiced 
+## 10 it01    it01-002 pada         1  651. 1119. 2155.  120.   139.  a     voiced 
+## # … with 11,555 more rows, 1 more variable: place &lt;chr&gt;, and abbreviated
+## #   variable names ¹​time_point, ²​duration
+```
+
+
+---
+
+
+
+---
+
+&lt;img src="index_files/figure-html/f0-gam-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/f0-gam-plot-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="index_files/figure-html/f0-gam-plot-3-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+class: center middle inverse
+
+# HANDS-ON 2
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
