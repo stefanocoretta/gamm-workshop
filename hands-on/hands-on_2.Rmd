@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = here::here())
 library(tidyverse)
 theme_set(theme_light())
+library(ggforce)
 options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
 options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
 library(mgcv)
@@ -122,3 +123,75 @@ Then fit the GAM, check the summary and produce plots based on the model.
 
 ## Tensor product smooths and interactions
 
+You got a taste of EGG so now let's move onto EEG (electroencephalography)!
+
+To make things simple, we will use EEG data from a single trial as illustration of what can be done with that type of data. The data is by Jacolien van Rij and it is part of the itsudug package.
+
+```{r eeg}
+load("data/eeg.rda")
+```
+
+`Time` is the time in ms, relative to the trial stimulus. `Ampl` is the electrode amplitude, and `X` and `Y` are the approximate electrode coordinates.
+
+Let's start with a basic GAM that looks at the coordinates `X` and `Y` and let's discard `Time` for now.
+
+We have seen during the conceptual presentation that when numeric predictors are on the same scale, we can use isotropic smooths with `s()`. Let's do this now, since `X` and `Y` are on the same scale.
+
+```{r eeg-gam}
+eeg_gam <- gam(
+  Ampl ~ s(X, Y),
+  data = eeg
+)
+
+summary(eeg_gam)
+```
+
+Look at the plot now.
+
+```{r eeg-gam-plot}
+predict_gam(eeg_gam) %>%
+  plot(series = c("X", "Y"), raster_interp = TRUE) +
+  # Let's pick a better palette
+  scale_fill_distiller(type = "div") +
+  # Add circle to approximate head limits
+  geom_circle(aes(x0 = 0, y0 = -1.5, r = 45), inherit.aes = FALSE) +
+  coord_fixed()
+```
+
+Great! But what about the fact that we have time-series data?
+
+The approach we can take is to use tensor product smooths with `Time`, `X`, and `Y`. Since `Time` and `X/Y` are on different scales, we cannot use `s()` but we need to use `te/ti()`.
+
+```{r eeg-gam-2}
+eeg_gam_2 <- gam(
+  Ampl ~ te(Time, X, Y),
+  data = eeg
+)
+
+summary(eeg_gam_2)
+```
+
+Let's do some plotting now.
+
+```{r eeg-gam-plot}
+predict_gam(eeg_gam_2) %>%
+  plot(series = c("X", "Y"), raster_interp = TRUE) +
+  scale_fill_distiller(type = "div") +
+  geom_circle(aes(x0 = 0, y0 = -1.5, r = 45), inherit.aes = FALSE) +
+  coord_fixed() +
+  facet_wrap(~ Time)
+```
+
+`predict_gam()` selects a range of values for `Time` but we can specify our own.
+
+```{r eeg-gam-plot-2}
+predict_gam(
+  eeg_gam_2,
+  values = list(Time = seq(0, 730, by = 146))
+) %>%
+  plot(series = c("X", "Y"), raster_interp = TRUE) +
+  scale_fill_distiller(type = "div") +
+  geom_circle(aes(x0 = 0, y0 = -1.5, r = 45), inherit.aes = FALSE) +
+  coord_fixed() +
+  facet_wrap(~ Time)
+```
