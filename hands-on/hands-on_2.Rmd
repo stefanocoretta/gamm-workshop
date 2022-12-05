@@ -1,0 +1,124 @@
+---
+title: "Hands-on 2"
+author: "Stefano Coretta"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = here::here())
+library(tidyverse)
+theme_set(theme_light())
+options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
+options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
+library(mgcv)
+options(show.signif.stars = FALSE)
+library(tidygam)
+```
+
+## Compare across groups
+
+### ACCH data
+
+Let's expand on our analysis of the `acch` data.
+In the first hands-on, we have looked at the effect of `Group` on logged reaction times.
+
+We can now look at the effects of `Group`, `Structure` and `Number` and their combinations.
+
+To do so, we first need to create a new column in `acch` with the factor interaction of `Group`, `Structure` and `Number`. Go ahead and fill in the following code to create a factor interaction. **Remember** that the factor has to be an ordered factor and that you also need to change the contrasts to `"contr.treatment"`.
+
+```{r acch-gr-st-nu}
+acch <- acch %>%
+  mutate(
+    Gr_St_Nu = ...
+  )
+...
+```
+
+Now you can fit a GAM with `Gr_St_Nu` as a `by`-variable to model the "interaction" between the levels of `Group`, `Structure` and `Number`.
+
+Fill in the missing code below. Remember to include:
+
+- A **parametric effect** of `Gr_St_Nu`.
+- A **reference smooth** over Trial.
+- A **difference smooth** over Trial **by** `Gr_St_Nu`.
+
+```{r rt-gam-2}
+rt_gam_2 <- gam(
+  RT_log ~
+    ...,
+  data = acch
+)
+```
+
+Now let's check the model summary.
+
+```{r rt-gam-2-sum}
+summary(rt_gam_2)
+```
+
+Look at the parametric coefficients. What do they indicate? Note that the Intercept is `bilingual.Object.Match` and that the estimate indicates differences in mean **height** of the smooths.
+
+Look at the smooth terms, the Estimated Degrees of Freedom in particular. What do they indicate? Note that EDF > 1 means that the **shape** of that level or combination of levels is different from the reference smooth.
+
+Let's inspect the model predictions.
+
+```{r rt-gam-2-pred}
+rt_gam_2_pred <- predict_gam(rt_gam_2)
+```
+
+To make plotting easier, let's separate the `Gr_St_Nu` factor interaction into the individual predictors.
+
+```{r rt-gam-2-sep}
+rt_gam_2_pred_sep <- predict_gam(
+  rt_gam_2,
+  # To separate factor interactions, use named lists of the form:
+  # factor interaction = vector of variables to be separated into.
+  separate = list(Gr_St_Nu = c("Group", "Structure", "Number")),
+  length_out = 30
+)
+```
+
+Let's plot now the predicted smooths. Feel free to try different comparisons/faceting.
+
+```{r rt-gam-2-plot}
+rt_gam_2_pred_sep %>%
+  plot(series = "Trial", comparison = "Structure") +
+  facet_grid(Number ~ Group)
+```
+
+### Electroglottographic (EGG) data from Italian and Polish speakers
+
+For this exercise, you will use EGG data from Italian and Polish speakers, which contains time-series information on the closed quotient (info below).
+
+```{r egg-cq}
+egg_cq <- read_csv("data/egg_cq.csv")
+```
+
+The data consists of measurements of closed quotient taken from the entire duration of the first vowel in CVCV nonce words, as spoken by Italian and Polish speakers.
+
+The closed quotient is a (relative) measure of glottal constriction (higher CQ values = greater glottal constriction).
+CQ is also related to phonation: the lower the CQ the breathier the phonation.
+
+The data contains time-series of CQ values in vowels (/a, o, u/) followed by voiceless or voiced consonants (/t, d, k, g/).
+`rel_time` corresponds to the relative (proportional) time the measurement was taken from, within the duration of the vowel.
+
+Go ahead and prepare the data so that you can fit a GAM over `rel_time`, while accounting for `language` (Italian vs Polish), `vowel` (/a, o, u/), `voicing` (voiced vs voiceless) and `place` (coronal vs velar).
+
+First, create a factor interaction (make sure it's an ordered factor and that it has treatment contrasts).
+
+```{r egg-cq-2}
+
+```
+
+Then fit the GAM, check the summary and produce plots based on the model.
+
+```{r cq-gam}
+
+```
+
+
+
+## Tensor product smooths and interactions
+

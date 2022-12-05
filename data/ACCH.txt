@@ -1,4 +1,4 @@
-Subject	Group	Trial	Condition	item	Remove	StimSlide.ACC	StimSlide.RT	Structure	Number 	First_NP
+Subject	Group	Trial	Condition	item	Remove	StimSlide.ACC	StimSlide.RT	Structure	Number	First_NP
 202	monolingual	1	1	1	no	1	6211	Subject	Match	Singular
 202	monolingual	1	1	2	no	1	3893	Subject	Match	Singular
 202	monolingual	15	1	3	no	0	4372	Subject	Match	Singular
