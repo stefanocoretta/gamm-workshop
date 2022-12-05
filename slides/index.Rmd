@@ -507,6 +507,8 @@ layout: true
 
 ## Comparing across groups (interactions)
 
+---
+
 * Technically, GAMs **don't allow interactions**.
 
   * They are ADDITIVE (interactions require multiplication).
