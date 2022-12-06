@@ -23,6 +23,16 @@ library(tidygam)
 ### ACCH data
 
 Let's expand on our analysis of the `acch` data.
+
+```{r acch}
+acch <- read_delim("data/ACCH.txt") %>%
+  mutate(
+    StimSlide.RT = StimSlide.RT/1000,
+    RT_log = log(StimSlide.RT),
+    ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
+  )
+```
+
 In the first hands-on, we have looked at the effect of `Group` on logged reaction times.
 
 We can now look at the effects of `Group`, `Structure` and `Number` and their combinations.
@@ -123,6 +133,9 @@ Then fit the GAM, check the summary and produce plots based on the model.
 
 ## Tensor product smooths and interactions
 
+
+### Electroencephalographic data from a single trial
+
 You got a taste of EGG so now let's move onto EEG (electroencephalography)!
 
 To make things simple, we will use EEG data from a single trial as illustration of what can be done with that type of data. The data is by Jacolien van Rij and it is part of the itsudug package.
@@ -195,3 +208,9 @@ predict_gam(
   coord_fixed() +
   facet_wrap(~ Time)
 ```
+
+### Pupillometry 
+
+Let's use data from a pupillometry study entitled *Pupillometry reveals cognitive demands of lexical competition during spoken word recognition in young and older adults* (<https://doi.org/10.3758/s13423-021-01991-0>).
+
+

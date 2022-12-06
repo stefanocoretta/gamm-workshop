@@ -645,7 +645,7 @@ Note that if the two numeric predictors are on the same scale (isotropic), you c
 
 ---
 
-```{r vowels}
+```{r vowels, echo=TRUE}
 vowels <- read_csv("data/vowels.csv")
 vowels
 ```
@@ -653,7 +653,7 @@ vowels
 
 ---
 
-```{r f0-gam}
+```{r f0-gam, echo=TRUE}
 f0_gam <- gam(
   f0 ~ 
     ti(time_point) + ti(duration) + ti(time_point, duration),
@@ -663,21 +663,21 @@ f0_gam <- gam(
 
 ---
 
-```{r f0-gam-plot}
+```{r f0-gam-plot, echo=TRUE}
 predict_gam(f0_gam) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r f0-gam-plot-2}
+```{r f0-gam-plot-2, echo=TRUE}
 predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r f0-gam-plot-3}
+```{r f0-gam-plot-3, echo=TRUE}
 predict_gam(f0_gam) %>%
   plot(
     series = c("time_point", "duration"),
