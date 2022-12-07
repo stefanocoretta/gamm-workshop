@@ -213,4 +213,76 @@ predict_gam(
 
 Let's use data from a pupillometry study entitled *Pupillometry reveals cognitive demands of lexical competition during spoken word recognition in young and older adults* (<https://doi.org/10.3758/s13423-021-01991-0>).
 
+```{r pdq-20}
+pdq_20 <- readRDS("data/pdq_20.rds")
+```
+
+The data has the following relevant columns:
+
+- `subject`: the subject's ID (1 to 110).
+- `trial`: the trial number (1 to 25)
+- `Condition`: the experimental condition, `Sparse` (i.e. easy) vs `Dense` (i.e. difficult).
+- `Age`: young adult (`YA`) vs old adult (`OA`). 
+- `timebins`: the lag from stimulus onset in ms.
+- `pupil.binned`: pupil dilation in Arbitrary Units (AU), larger numbers mean greater pupil dilation.
+
+We want to build a GAM that models pupil dilation along the time bins and through the trials, depending on condition and subject's age.
+
+This means we need:
+
+- A factor interaction between `Condition` and `Age` as a parametric term.
+- A reference smooth over `timebins`.
+- A reference smooth over `trial`.
+- A difference smooth over `timebins` with the factor interaction between `Condition` and `Age` as the `by`-variable.
+- A difference smooth over `trial` with the factor interaction between `Condition` and `Age` as the `by`-variable.
+- A reference tensor product interaction over `timebins` and `trial`.
+- A difference tensor product interaction over `timebins` and `trial` with the factor interaction between `Condition` and `Age` as the `by`-variable.
+
+Let's first create the factor interaction. Fill in the code below, remember to make it into an ordered factor and set contrasts to treatment.
+
+```{r pdq-co-ag}
+pdq_20 <- pdq_20 %>%
+  mutate(
+    Co_Ag = ...
+  )
+```
+
+Now let's run the GAM. Fill in the code using the prompts. Note that we will use the `ti(x) + ti(y) + ti(x, y)` syntax. We will also use `bam()` instead of `gam()`: `bam()` optimises calculations for "big" GAMs so that the model fits quicker. Note that it does not hurt to always use `bam()`, even with simple GAMs.
+
+```{r pdq_gam}
+pdq_gam <- bam(
+  pupil.binned ~
+    # Add Co_Ag as a parametric term
+    ... +
+    # Add a reference smooth over `timebins`
+    ti(...) +
+    # Add a reference smooth over `trial`
+    ti(...) +
+    # Add a difference smooth over `timebins` with `Co_Ag`
+    ti(..., by = ...) +
+    # Add a difference smooth over `trial` with `Co_Ag`
+    ti(..., by = ...) +
+    # Add a tensor product interaction over `timebins` and `trial`
+    ti(..., ...) +
+    # A difference tensor product interaction over `timebins` and `trial` with `Co_Ag`
+    ti(..., ..., by = ...),
+  data = pdq_20
+)
+```
+
+Now, let's plot this!
+
+```{r pdq-gam-plot}
+predict_gam(pdq_gam, separate = list(Co_Ag = c("Condition", "Age"))) %>%
+  plot(series = "timebins", comparison = "trial") +
+  facet_grid(Condition ~ Age)
+```
+
+You can also plot the tensor product interaction with a `timebins` by `trial` plot.
+
+```{r pdq-gam-plot-2}
+predict_gam(pdq_gam, separate = list(Co_Ag = c("Condition", "Age"))) %>%
+  plot(series = c("timebins", "trial"), raster_interp = TRUE) +
+  facet_grid(Condition ~ Age)
+```
 
