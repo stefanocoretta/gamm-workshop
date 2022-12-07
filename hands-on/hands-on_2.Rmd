@@ -249,7 +249,7 @@ pdq_20 <- pdq_20 %>%
 
 Now let's run the GAM. Fill in the code using the prompts. Note that we will use the `ti(x) + ti(y) + ti(x, y)` syntax. We will also use `bam()` instead of `gam()`: `bam()` optimises calculations for "big" GAMs so that the model fits quicker. Note that it does not hurt to always use `bam()`, even with simple GAMs.
 
-```{r pdq_gam}
+```{r pdq-gam}
 pdq_gam <- bam(
   pupil.binned ~
     # Add Co_Ag as a parametric term

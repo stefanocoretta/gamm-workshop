@@ -691,3 +691,128 @@ layout: false
 class: center middle inverse
 
 # HANDS-ON 2
+
+---
+
+layout: true
+
+## Random effects with factor smooths
+
+---
+
+* Only **fixed effects** so far...
+
+* **G**eneralised **A**dditive **M**ixed **M**odel (GAMM)
+
+* Include a **random smooth** term with the **factor smooth interaction** as basis.
+
+---
+
+* **Factor smooth interaction**:
+    * `bs = "fs"`.
+    * A smooth is fitted at each level of a factor.
+
+* The random effect variable *needs to be a factor*.
+
+* `s(Trial, Subject, bs = "fs", m = 1)`
+
+---
+
+```{r acch-str-o}
+acch <- acch %>%
+  mutate(Structure_o = as.ordered(Structure))
+
+contrasts(acch$Structure_o) <- "contr.treatment"
+```
+
+---
+
+```{r rt-gam-2}
+rt_gam_2 <- gam(
+  RT_log ~
+    Gr_St + s(Trial) + s(Trial, by = Gr_St) +
+    s(Trial, Subject, bs = "fs", m = 1) +
+    s(Trial, Subject, by = Structure_o, bs = "fs", m = 1),
+  data = acch
+)
+```
+
+---
+
+```{r rt-gam-2-sum}
+summary(rt_gam_2)
+```
+
+
+---
+
+```{r rt-gam-2-plot}
+predict_gam(
+  rt_gam_2,
+  separate = list(Gr_St = c("Group", "Structure")),
+  exclude_terms = c("s(Trial,Subject)", "s(Trial,Subject):Structure_oSubject")
+) %>%
+  select(-Structure_o) %>%
+  distinct() %>%
+  plot(series = "Trial", comparison = "Structure") +
+  facet_grid(~ Group)
+```
+
+---
+
+```{r rt-gam-2-diff}
+get_difference(
+  rt_gam_2, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
+) %>%
+  plot()
+```
+
+
+---
+
+```{r rt-gam-2-diff-2}
+get_difference(
+  rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
+) %>%
+  plot()
+```
+
+---
+
+layout: false
+
+## GAMs with binomial/Bernoulli families
+
+---
+
+```{r acc-gam-2}
+acc_gam_2 <- gam(
+  StimSlide.ACC ~
+    Gr_St + s(Trial) + s(Trial, by = Gr_St) +
+    s(Trial, Subject, bs = "fs", m = 1),
+  data = acch,
+  family = binomial()
+)
+```
+
+---
+
+```{r acc-gam-2-sum}
+summary(acc_gam_2)
+```
+
+
+---
+
+```{r acc-gam-2-plot}
+predict_gam(
+  acc_gam_2,
+  separate = list(Gr_St = c("Group", "Structure")),
+  tran_fun = plogis,
+  exclude_terms = "s(Trial,Subject)",
+  length_out = 30
+) %>%
+  plot(series = "Trial", comparison = "Structure") +
+  facet_grid(~ Group)
+```
+
