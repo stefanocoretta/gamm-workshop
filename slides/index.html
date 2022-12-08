@@ -38,6 +38,21 @@ class: center, middle, inverse, title-slide
 
 
 
+```r
+set.seed(8788)
+x &lt;- seq(0,100,1)
+y &lt;- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
+x_1 &lt;- seq(0, 100, 1)
+y_1 &lt;- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
+
+sim_nl &lt;- tibble(
+  x = c(x, x_1),
+  y = c(y, y_1),
+  group = rep(c("a", "b"), each = 101)
+)
+
+sim_nl_a &lt;- filter(sim_nl, group == "a")
+```
 
 class: center middle inverse
 
@@ -57,9 +72,28 @@ where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
 
 ---
 
+
+```r
+line &lt;- tibble(
+  x = c(2, 4, 5, 8, 10, 23, 36),
+  y = 3 + 2 * x
+)
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
+
 &lt;img src="index_files/figure-html/homework-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+ggplot(line, aes(x, y)) +
+  geom_point(colour = "gray", size = 4) +
+  geom_line(colour = "red") +
+  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
+```
 
 &lt;img src="index_files/figure-html/line-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -70,6 +104,22 @@ where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
 * For example, vowel duration and VOT, speech rate and pitch, etc.
 
 ---
+
+
+```r
+set.seed(4321)
+x &lt;- 1:10
+y &lt;- (1 + 1.5 * x) + rnorm(10, 0, 1)
+
+line &lt;- tibble(
+  x = x,
+  y = y
+)
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == "?" + "?" * italic(x)))
+```
 
 &lt;img src="index_files/figure-html/sampled-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -95,9 +145,31 @@ where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
 
 ---
 
+
+```r
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote({italic(y) == beta[0] + beta[1] * italic(x)} == 1 + 1.5 * italic(x)))
+```
+
 &lt;img src="index_files/figure-html/lm-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+m &lt;- lm(y ~ x)
+yhat &lt;- m$fitted.values
+diff &lt;- y - yhat  
+ggplot(line, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + epsilon))
+```
 
 &lt;img src="index_files/figure-html/error-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -110,13 +182,40 @@ layout: true
 
 ---
 
+
+```r
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  labs(title = "Some non-linear data")
+```
+
 &lt;img src="index_files/figure-html/plot-data-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
+
 &lt;img src="index_files/figure-html/plot-lm-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+m &lt;- lm(y ~ x, data = sim_nl_a)
+yhat &lt;- m$fitted.values
+diff &lt;- sim_nl_a$y - yhat  
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Some non-linear data")
+```
 
 &lt;img src="index_files/figure-html/error-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -133,21 +232,64 @@ How to account for non-linearity in a linear model?
 
 ---
 
+
+```r
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
+```
+
 &lt;img src="index_files/figure-html/2-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
+```
 
 &lt;img src="index_files/figure-html/3-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+ggplot(sim_nl_a, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
+```
+
 &lt;img src="index_files/figure-html/10-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
+
 &lt;img src="index_files/figure-html/10-poly-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+ggplot(line, aes(x, y)) +
+  geom_point(size = 4) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
+  ylim(1, 18)
+```
 
 &lt;img src="index_files/figure-html/10-poly-21-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -202,6 +344,43 @@ layout: false
 ---
 
 ## Basis functions and knots
+
+
+```r
+par(mfrow = c(1, 2))
+
+simple &lt;- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
+
+X &lt;- predict(
+  simple,
+  newdata = data.frame(x = sim_nl_a$x),
+  type = "lpmatrix"
+)[,2:10]
+
+plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-2, 3), xlab = "x", ylab = "y")
+for (i in 1:ncol(X)) {
+  lines(sim_nl_a$x, X[, i], col = i, lw = 1)
+}
+
+X2 &lt;- X %*% diag(coef(simple)[2:10])
+plot(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  type = "n",
+  ylim = c(-8, 3),
+  xlab = "x", ylab = "y"
+)
+for (i in 1:ncol(X2)) {
+  lines(sim_nl_a$x, X2[, i], col = i, lw = 1)
+}
+lines(
+  sim_nl_a$x,
+  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
+    coef(simple)[1],
+  lw = 3
+)
+```
 
 &lt;img src="index_files/figure-html/basis-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -279,9 +458,20 @@ summary(simple)
 
 ---
 
+
+```r
+predict_gam(simple, series = "x", length_out = 30) %&gt;% plot()
+```
+
 &lt;img src="index_files/figure-html/simple-10-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+simple_5 &lt;- gam(y ~ s(x, bs = "cr", k = 5), data = sim_nl_a)
+predict_gam(simple_5, series = "x", length_out = 30) %&gt;% plot()
+```
 
 &lt;img src="index_files/figure-html/simple-5-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -294,9 +484,22 @@ layout: true
 
 ---
 
+
+```r
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point(size = 4)
+```
+
 &lt;img src="index_files/figure-html/nl-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+ggplot(sim_nl, aes(x, y, colour = group)) +
+  geom_point(size = 4, alpha = 0.3) +
+  geom_smooth(se = FALSE, method = "gam")
+```
 
 &lt;img src="index_files/figure-html/nl-smooth-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -356,6 +559,10 @@ compare &lt;- gam(
 ---
 
 
+
+```r
+summary(compare)
+```
 
 ```
 ## 
@@ -418,6 +625,17 @@ layout: true
 Let's use the ACCH data frame from the hands-on.
 
 
+```r
+acch &lt;- read_delim("data/ACCH.txt") %&gt;%
+  mutate(
+    StimSlide.RT = StimSlide.RT/1000,
+    RT_log = log(StimSlide.RT),
+    ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
+  )
+
+acch
+```
+
 ```
 ## # A tibble: 4,796 × 13
 ##    Subject Group       Trial Condi…¹  item Remove StimS…² StimS…³ Struc…⁴ Number
@@ -444,6 +662,16 @@ Now, let's create a factor interaction between `Group` and `Structure`.
 We also need to make it into an ordered factor with treatment contrasts.
 
 
+```r
+acch &lt;- acch %&gt;%
+  mutate(
+    Gr_St = as.ordered(interaction(Group, Structure))
+  )
+contrasts(acch$Gr_St) &lt;- "contr.treatment"
+
+head(acch$Gr_St)
+```
+
 ```
 ## [1] monolingual.Subject monolingual.Subject monolingual.Subject
 ## [4] monolingual.Subject monolingual.Subject monolingual.Subject
@@ -455,9 +683,19 @@ We also need to make it into an ordered factor with treatment contrasts.
 ---
 
 
+```r
+rt_gam &lt;- gam(
+  RT_log ~ Gr_St + s(Trial) + s(Trial, by = Gr_St),
+  data = acch
+)
+```
 
 ---
 
+
+```r
+summary(rt_gam)
+```
 
 ```
 ## 
@@ -487,21 +725,60 @@ We also need to make it into an ordered factor with treatment contrasts.
 
 ---
 
+
+```r
+# library(tidygam)
+predict_gam(rt_gam, series = "Trial", length_out = 50) %&gt;%
+  plot(comparison = "Gr_St")
+```
+
 &lt;img src="index_files/figure-html/rt-gam-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+predict_gam(rt_gam, series = "Trial", length_out = 50,
+            separate = list(Gr_St = c("Group", "Structure"))) %&gt;%
+  plot(comparison = "Group") +
+  facet_grid(Structure ~ .)
+```
 
 &lt;img src="index_files/figure-html/rt-gam-plot-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))
+) %&gt;%
+  plot()
+```
+
 &lt;img src="index_files/figure-html/rt-gam-diff-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
+) %&gt;%
+  plot()
+```
+
 &lt;img src="index_files/figure-html/rt-gam-diff-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+get_difference(
+  rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
+) %&gt;%
+  plot()
+```
 
 &lt;img src="index_files/figure-html/rt-gam-diff-3-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -544,6 +821,11 @@ Note that if the two numeric predictors are on the same scale (isotropic), you c
 ---
 
 
+```r
+vowels &lt;- read_csv("data/vowels.csv")
+vowels
+```
+
 ```
 ## # A tibble: 11,565 × 12
 ##    speaker index    word  time_p…¹    f1    f2    f3    f0 durat…² vowel voicing
@@ -566,16 +848,44 @@ Note that if the two numeric predictors are on the same scale (isotropic), you c
 ---
 
 
+```r
+f0_gam &lt;- gam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration),
+  data = vowels
+)
+```
 
 ---
+
+
+```r
+predict_gam(f0_gam) %&gt;%
+  plot(series = "time_point", comparison = "duration")
+```
 
 &lt;img src="index_files/figure-html/f0-gam-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+
+```r
+predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %&gt;%
+  plot(series = "time_point", comparison = "duration")
+```
+
 &lt;img src="index_files/figure-html/f0-gam-plot-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
+
+
+```r
+predict_gam(f0_gam) %&gt;%
+  plot(
+    series = c("time_point", "duration"),
+    raster_interp = TRUE
+  )
+```
 
 &lt;img src="index_files/figure-html/f0-gam-plot-3-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -585,6 +895,211 @@ layout: false
 class: center middle inverse
 
 # HANDS-ON 2
+
+---
+
+layout: true
+
+## Random effects with factor smooths
+
+---
+
+* Only **fixed effects** so far...
+
+* **G**eneralised **A**dditive **M**ixed **M**odel (GAMM)
+
+* Include a **random smooth** term with the **factor smooth interaction** as basis.
+
+---
+
+* **Factor smooth interaction**:
+    * `bs = "fs"`.
+    * A smooth is fitted at each level of a factor.
+
+* The random effect variable *needs to be a factor*.
+
+* `s(Trial, Subject, bs = "fs", m = 1)`
+
+---
+
+
+```r
+acch &lt;- acch %&gt;%
+  mutate(Structure_o = as.ordered(Structure))
+
+contrasts(acch$Structure_o) &lt;- "contr.treatment"
+```
+
+---
+
+
+```r
+rt_gam_2 &lt;- gam(
+  RT_log ~
+    Gr_St + s(Trial) + s(Trial, by = Gr_St) +
+    s(Trial, Subject, bs = "fs", m = 1) +
+    s(Trial, Subject, by = Structure_o, bs = "fs", m = 1),
+  data = acch
+)
+```
+
+---
+
+
+```r
+summary(rt_gam_2)
+```
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## RT_log ~ Gr_St + s(Trial) + s(Trial, by = Gr_St) + s(Trial, Subject, 
+##     bs = "fs", m = 1) + s(Trial, Subject, by = Structure_o, bs = "fs", 
+##     m = 1)
+## 
+## Parametric coefficients:
+##                           Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)               1.618266   0.037652  42.979   &lt;2e-16
+## Gr_Stmonolingual.Object   0.001025   0.062932   0.016   0.9870
+## Gr_Stbilingual.Subject   -0.023624   0.052270  -0.452   0.6513
+## Gr_Stmonolingual.Subject -0.104227   0.046724  -2.231   0.0257
+## 
+## Approximate significance of smooth terms:
+##                                         edf  Ref.df     F p-value
+## s(Trial)                             1.6225  1.8555 0.177   0.821
+## s(Trial):Gr_Stmonolingual.Object     1.0000  1.0000 0.000   0.988
+## s(Trial):Gr_Stbilingual.Subject      1.7496  2.2769 0.884   0.373
+## s(Trial):Gr_Stmonolingual.Subject    0.6667  0.6667 0.041   0.869
+## s(Trial,Subject)                    19.8833 24.2136 3.472  &lt;2e-16
+## s(Trial,Subject):Structure_oSubject  1.6667  1.6667 0.929   0.279
+## 
+## Rank: 96/97
+## R-sq.(adj) =  0.0301   Deviance explained = 3.61%
+## GCV = 0.13803  Scale est. = 0.13714   n = 4796
+```
+
+
+---
+
+
+```r
+predict_gam(
+  rt_gam_2,
+  separate = list(Gr_St = c("Group", "Structure")),
+  exclude_terms = c("s(Trial,Subject)", "s(Trial,Subject):Structure_oSubject")
+) %&gt;%
+  select(-Structure_o) %&gt;%
+  distinct() %&gt;%
+  plot(series = "Trial", comparison = "Structure") +
+  facet_grid(~ Group)
+```
+
+&lt;img src="index_files/figure-html/rt-gam-2-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+get_difference(
+  rt_gam_2, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
+) %&gt;%
+  plot()
+```
+
+
+---
+
+
+```r
+get_difference(
+  rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
+) %&gt;%
+  plot()
+```
+
+&lt;img src="index_files/figure-html/rt-gam-2-diff-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+
+## GAMs with binomial/Bernoulli families
+
+---
+
+
+```r
+acc_gam_2 &lt;- gam(
+  StimSlide.ACC ~
+    Gr_St + s(Trial) + s(Trial, by = Gr_St) +
+    s(Trial, Subject, bs = "fs", m = 1),
+  data = acch,
+  family = binomial()
+)
+```
+
+---
+
+
+```r
+summary(acc_gam_2)
+```
+
+```
+## 
+## Family: binomial 
+## Link function: logit 
+## 
+## Formula:
+## StimSlide.ACC ~ Gr_St + s(Trial) + s(Trial, by = Gr_St) + s(Trial, 
+##     Subject, bs = "fs", m = 1)
+## 
+## Parametric coefficients:
+##                          Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)               2.82414    0.67629   4.176 2.97e-05
+## Gr_Stmonolingual.Object  -1.80257    1.12546  -1.602    0.109
+## Gr_Stbilingual.Subject    2.11279    0.24017   8.797  &lt; 2e-16
+## Gr_Stmonolingual.Subject  0.05691    1.13643   0.050    0.960
+## 
+## Approximate significance of smooth terms:
+##                                      edf Ref.df Chi.sq  p-value
+## s(Trial)                           1.000  1.000  0.003 0.956402
+## s(Trial):Gr_Stmonolingual.Object   5.157  6.261  5.894 0.447924
+## s(Trial):Gr_Stbilingual.Subject    1.000  1.000  4.986 0.025566
+## s(Trial):Gr_Stmonolingual.Subject  5.132  6.214  9.032 0.186108
+## s(Trial,Subject)                  19.048 23.150 55.660 0.000175
+## 
+## R-sq.(adj) =  0.0722   Deviance explained = 12.8%
+## UBRE = -0.45342  Scale est. = 1         n = 4796
+```
+
+
+---
+
+
+```r
+predict_gam(
+  acc_gam_2,
+  separate = list(Gr_St = c("Group", "Structure")),
+  tran_fun = plogis,
+  exclude_terms = "s(Trial,Subject)",
+  length_out = 30
+) %&gt;%
+  plot(series = "Trial", comparison = "Structure") +
+  facet_grid(~ Group)
+```
+
+&lt;img src="index_files/figure-html/acc-gam-2-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+layout: false
+class: center middle inverse
+
+# HANDS-ON 3
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

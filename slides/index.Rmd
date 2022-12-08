@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
   fig.width=7, fig.height=5, fig.retina=3,
   out.width = "60%", fig.align = "center",
   cache = FALSE,
-  echo = FALSE,
+  echo = TRUE,
   message = FALSE, 
   warning = FALSE,
   hiline = TRUE
@@ -434,7 +434,7 @@ ggplot(sim_nl, aes(x, y, colour = group)) +
 
 * `by`-variables with ordered factors
 
-```{r by-variables, echo=TRUE, eval=FALSE}
+```{r by-variables, eval=FALSE}
 compare <- gam(
   y ~
     group +
@@ -459,7 +459,7 @@ To use `by`-variables with ordered factors:
 
 ---
 
-```{r ordered, echo=TRUE}
+```{r ordered}
 sim_nl <- sim_nl %>%
   mutate(group_o = ordered(group, levels = c("a", "b")))
 contrasts(sim_nl$group_o) <- "contr.treatment"
@@ -467,7 +467,7 @@ contrasts(sim_nl$group_o) <- "contr.treatment"
 
 ---
 
-```{r compare-gam, echo=TRUE}
+```{r compare-gam}
 compare <- gam(
   y ~
     # parametric term
@@ -489,7 +489,7 @@ summary(compare)
 
 ---
 
-```{r plot-smooth, echo=TRUE}
+```{r plot-smooth}
 library(tidygam)
 predict_gam(compare, series = "x", length_out = 30) %>% plot(comparison = "group_o")
 ```
@@ -645,7 +645,7 @@ Note that if the two numeric predictors are on the same scale (isotropic), you c
 
 ---
 
-```{r vowels, echo=TRUE}
+```{r vowels}
 vowels <- read_csv("data/vowels.csv")
 vowels
 ```
@@ -653,7 +653,7 @@ vowels
 
 ---
 
-```{r f0-gam, echo=TRUE}
+```{r f0-gam}
 f0_gam <- gam(
   f0 ~ 
     ti(time_point) + ti(duration) + ti(time_point, duration),
@@ -663,21 +663,21 @@ f0_gam <- gam(
 
 ---
 
-```{r f0-gam-plot, echo=TRUE}
+```{r f0-gam-plot}
 predict_gam(f0_gam) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r f0-gam-plot-2, echo=TRUE}
+```{r f0-gam-plot-2}
 predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
   plot(series = "time_point", comparison = "duration")
 ```
 
 ---
 
-```{r f0-gam-plot-3, echo=TRUE}
+```{r f0-gam-plot-3}
 predict_gam(f0_gam) %>%
   plot(
     series = c("time_point", "duration"),
@@ -727,7 +727,7 @@ contrasts(acch$Structure_o) <- "contr.treatment"
 
 ---
 
-```{r rt-gam-2}
+```{r rt-gam-2, cache=TRUE}
 rt_gam_2 <- gam(
   RT_log ~
     Gr_St + s(Trial) + s(Trial, by = Gr_St) +
@@ -760,7 +760,7 @@ predict_gam(
 
 ---
 
-```{r rt-gam-2-diff}
+```{r rt-gam-2-diff, eval=FALSE}
 get_difference(
   rt_gam_2, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
 ) %>%
@@ -785,7 +785,7 @@ layout: false
 
 ---
 
-```{r acc-gam-2}
+```{r acc-gam-2, cache=TRUE}
 acc_gam_2 <- gam(
   StimSlide.ACC ~
     Gr_St + s(Trial) + s(Trial, by = Gr_St) +
