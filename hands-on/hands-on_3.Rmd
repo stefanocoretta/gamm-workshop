@@ -1,0 +1,212 @@
+---
+title: "Hands-on 3"
+author: "Stefano Coretta"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = here::here())
+library(tidyverse)
+theme_set(theme_light())
+library(ggforce)
+options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
+options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
+library(mgcv)
+options(show.signif.stars = FALSE)
+library(tidygam)
+```
+
+## Random effects
+
+There are two main ways of including random effects in GAMs. Note that the concept of random effects is a tricky one, even in non-additive linear models and given the complexity of random effects as a concept in GAMs I will give you a general introduction on how to include random effects, but I refer you to Márton Sóskuthy's paper for a more in-depth treatment (<https://www.sciencedirect.com/science/article/pii/S009544702030108X>, the paper is on phonetics but applies to any field.)
+
+Let's start with the data on f0 trajectories.
+
+```{r vowels}
+vowels <- read_csv("data/vowels.csv")
+vowels
+```
+
+Look at the model without random effects and its plot below.
+
+```{r f0-gam}
+f0_gam <- gam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration),
+  data = vowels
+)
+```
+
+```{r f0-gam-plot-2, echo=TRUE}
+predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+Now, let's add random effects.
+
+### Random intercepts and random slopes
+
+One way to include random effects is practically the GAM equivalent of random intercepts and random slopes in linear models.
+
+Random intercepts allow the GAM to model different smooth heights for different participants, items, etc.
+Random slopes allow the GAM to model different smooth rotations for different participants, items, etc.
+Note that random intercept and slopes **do not** affect the **shape** of the smooth, just the height or its degree of rotation.
+
+You can include random intercepts and slopes like so:
+
+```{r f0-gam-2}
+vowels <- vowels %>%
+  mutate(
+    # Variables you want to include as random effects must be factors (no need for them to be ordered).
+    speaker = as.factor(speaker)
+  )
+
+f0_gam_2 <- bam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration) +
+    # Random intercept by speaker
+    s(speaker, bs = "re") +
+    # Random slope of time point by speaker
+    s(speaker, time_point, bs = "re"),
+  data = vowels
+)
+```
+
+```{r f0-gam-2-sum}
+summary(f0_gam_2)
+```
+
+```{r f0-gam-2-plot}
+predict_gam(
+  f0_gam_2, values = list(duration = c(50, 100, 150, 200)),
+  exclude_terms = c("s(speaker)", "s(speaker,time_point)")
+  ) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+### Random effects with factor smooth interactions
+
+An alternative way to include random effects is to use so-called **factor smooth interactions**.
+
+Factor smooths interactions deal with height and rotation as the random intercept and slope do, but they also deal with the **shape** of the smooth, so you just need factor smooth interactions.
+
+This is how ypu add factor smooth interactions.
+
+```{r f0-gam-3}
+# Remember that the variable you include in factor smooth interactions has to be a factor.
+
+f0_gam_3 <- bam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration) +
+    s(time_point, speaker, bs = "fs", m = 1),
+  data = vowels
+)
+```
+
+Notice that the order of the variable when including factor smooth interactions is the opposite of what you would do with random slopes. The basis function has to be `"fs"` for factor smooths and you also need to set `m` to 1 (this constraints the smoothing penalty further so that you don't over-fit the data).
+
+Note that factor smooth interactions increase computation time but they are worth the wait.
+
+```{r f0-gam-3-sum}
+summary(f0_gam_3)
+```
+
+```{r f0-gam-3-plot}
+predict_gam(
+  f0_gam_3, values = list(duration = c(50, 100, 150, 200)),
+  exclude_terms = c("s(time_point,speaker)")
+  ) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+If you want to see the predicted f0 trajectory for some of the subjects, you can specify this with the `values` argument.
+
+```{r f0-gam-3-plot}
+predict_gam(
+  f0_gam_3, values = list(
+      duration = c(50, 100, 150, 200),
+      speaker = c("it01", "it02", "it03", "pl03", "pl04", "pl05")
+    )
+  ) %>%
+  plot(series = "time_point", comparison = "duration") +
+  facet_wrap(~ speaker)
+```
+Let's see what happens when we also include a factor smooth interaction by-speaker for duration.
+
+```{r f0-gam-4}
+f0_gam_4 <- bam(
+  f0 ~ 
+    ti(time_point) + ti(duration) + ti(time_point, duration) +
+    s(time_point, speaker, bs = "fs", m = 1) +
+    s(duration, speaker, bs = "fs", m = 1),
+  data = vowels,
+  # The fast-REML method speeds model fitting
+  method = "fREML"
+)
+```
+
+You will notice that it took bit more to fit the model. But let's see what we got now.
+
+```{r f0-gam-4-sum}
+summary(f0_gam_4)
+```
+
+
+
+```{r f0-gam-4-plot}
+predict_gam(
+  f0_gam_4, values = list(duration = c(50, 100, 150, 200)),
+  exclude_terms = c("s(time_point,speaker)", "s(duration,speaker)")
+  ) %>%
+  plot(series = "time_point", comparison = "duration")
+```
+
+Including factor smooths for time point and duration has increased the uncertainty around the estimated f0 trajectories. But the model (summary) still indicates that:
+
+- The trajectory of f0 is not a straight line (`ti(time_point)` EDFs, p-value).
+- Duration affects f0 in a non-linear way (`ti(duration)` EDFs, p-value).
+- The "interaction" between time point and duration is non-linear (`ti(time_point, duration)` EDFs, p-value).
+- Speaker specific variation is also non-linear (EDFs and p-values of factor smooths).
+
+Let's take a peek at the predicted effects for six speakers.
+
+```{r f0-gam-4-plot-2}
+predict_gam(
+  f0_gam_4, values = list(
+      duration = c(50, 100, 150, 200),
+      speaker = c("it01", "it02", "it03", "pl03", "pl04", "pl05")
+    )
+  ) %>%
+  plot(series = "time_point", comparison = "duration") +
+  facet_wrap(~ speaker)
+```
+
+Let's focus on the effect of vowel duration on f0 at vowel onset, mid-point and offset.
+
+```{r f0-gam-4-plot-3}
+predict_gam(
+  f0_gam_4, values = list(
+      time_point = c(1, 5, 9),
+      speaker = c("it01", "it02", "it03", "pl03", "pl04", "pl05")
+    ),
+  length_out = 30
+  ) %>%
+  plot(series = "duration", comparison = "time_point") +
+  facet_wrap(~ speaker)
+```
+
+Let's go one step further and let's look at the tensor product interaction in full.
+
+```{r f0-gam-4-plot-4}
+predict_gam(
+  f0_gam_4, values = list(
+      speaker = c("it01", "it02", "it03", "pl03", "pl04", "pl05")
+    )
+  ) %>%
+  plot(series = c("time_point", "duration"), raster_interp = TRUE) +
+  facet_wrap(~ speaker)
+```
+
+You see that some types of plots are easier to interpret than others, so it is always up to you to decide which one to include in a paper depending on what message you want to convey.

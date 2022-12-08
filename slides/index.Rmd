@@ -816,3 +816,9 @@ predict_gam(
   facet_grid(~ Group)
 ```
 
+---
+
+layout: false
+class: center middle inverse
+
+# HANDS-ON 3
