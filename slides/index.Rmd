@@ -5,12 +5,15 @@ author: "Dr Stefano Coretta"
 date: "12-15 December 2022"
 output:
   xaringan::moon_reader:
-    css: xaringan-themer.css
+    css:
+      - xaringan-themer.css
+      - custom.css
     nature:
       highlightStyle: github
       highlightLines: true
       ratio: 16:9
       countIncrementalSlides: true
+      beforeInit: "macros.js"
 ---
 
 ```{r setup, include=FALSE}
@@ -41,7 +44,7 @@ library(xaringanthemer)
 style_mono_light(outfile = "slides/xaringan-themer.css")
 ```
 
-```{r data, message=FALSE}
+```{r data, echo=FALSE, message=FALSE}
 set.seed(8788)
 x <- seq(0,100,1)
 y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
@@ -57,9 +60,11 @@ sim_nl <- tibble(
 sim_nl_a <- filter(sim_nl, group == "a")
 ```
 
-class: center middle inverse
+class: inverse
+background-image: url(../img/time-travel.jpg)
+background-size: contain
 
-.f1[Time travel...]
+# Time travel...
 
 ---
 
@@ -75,7 +80,7 @@ where $x = (2, 4, 5, 8, 10, 23, 36)$
 
 ---
 
-```{r homework}
+```{r homework, echo=FALSE}
 line <- tibble(
   x = c(2, 4, 5, 8, 10, 23, 36),
   y = 3 + 2 * x
@@ -87,7 +92,7 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-```{r line}
+```{r line, echo=FALSE}
 ggplot(line, aes(x, y)) +
   geom_point(colour = "gray", size = 4) +
   geom_line(colour = "red") +
@@ -102,7 +107,7 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-```{r sampled}
+```{r sampled, echo=FALSE}
 set.seed(4321)
 x <- 1:10
 y <- (1 + 1.5 * x) + rnorm(10, 0, 1)
@@ -139,7 +144,7 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-```{r lm-plot}
+```{r lm-plot, echo=FALSE}
 ggplot(line, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -149,7 +154,7 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-```{r error}
+```{r error, echo=FALSE}
 m <- lm(y ~ x)
 yhat <- m$fitted.values
 diff <- y - yhat  
@@ -170,7 +175,7 @@ layout: true
 
 ---
 
-```{r plot-data}
+```{r plot-data, echo=FALSE}
 ggplot(sim_nl_a, aes(x, y)) +
   geom_point(size = 4) +
   labs(title = "Some non-linear data")
@@ -178,7 +183,7 @@ ggplot(sim_nl_a, aes(x, y)) +
 
 ---
 
-```{r plot-lm}
+```{r plot-lm, echo=FALSE}
 ggplot(sim_nl_a, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -187,7 +192,7 @@ ggplot(sim_nl_a, aes(x, y)) +
 
 ---
 
-```{r error-2}
+```{r error-2, echo=FALSE}
 m <- lm(y ~ x, data = sim_nl_a)
 yhat <- m$fitted.values
 diff <- sim_nl_a$y - yhat  
@@ -211,7 +216,7 @@ How to account for non-linearity in a linear model?
 
 ---
 
-```{r 2-poly}
+```{r 2-poly, echo=FALSE}
 ggplot(sim_nl_a, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
@@ -220,7 +225,7 @@ ggplot(sim_nl_a, aes(x, y)) +
 
 ---
 
-```{r 3-poly}
+```{r 3-poly, echo=FALSE}
 ggplot(sim_nl_a, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
@@ -229,7 +234,7 @@ ggplot(sim_nl_a, aes(x, y)) +
 
 ---
 
-```{r 10-poly}
+```{r 10-poly, echo=FALSE}
 ggplot(sim_nl_a, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
@@ -238,7 +243,7 @@ ggplot(sim_nl_a, aes(x, y)) +
 
 ---
 
-```{r 10-poly-2, warning=FALSE}
+```{r 10-poly-2, warning=FALSE, echo=FALSE}
 ggplot(line, aes(x, y)) +
   geom_point(size = 4) +
   scale_x_continuous(breaks = 1:10) +
@@ -248,7 +253,7 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-```{r 10-poly-21, warning=FALSE}
+```{r 10-poly-21, warning=FALSE, echo=FALSE}
 ggplot(line, aes(x, y)) +
   geom_point(size = 4) +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
@@ -309,7 +314,7 @@ layout: false
 
 ## Basis functions and knots
 
-```{r basis}
+```{r basis, echo=FALSE}
 par(mfrow = c(1, 2))
 
 simple <- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
@@ -379,7 +384,7 @@ layout: true
 
 ---
 
-```{r simple-10, echo = TRUE}
+```{r simple-10}
 simple <- gam(
   y ~ 
     # Cubic regression spline.
@@ -391,7 +396,7 @@ simple <- gam(
 
 ---
 
-```{r summary-10, echo = TRUE}
+```{r summary-10}
 summary(simple)
 ```
 
@@ -417,16 +422,16 @@ layout: true
 
 ---
 
-```{r nl-plot}
+```{r nl-plot, echo=FALSE}
 ggplot(sim_nl, aes(x, y, colour = group)) +
-  geom_point(size = 4)
+  geom_point(size = 2)
 ```
 
 ---
 
-```{r nl-smooth, message=FALSE}
+```{r nl-smooth, message=FALSE, echo=FALSE}
 ggplot(sim_nl, aes(x, y, colour = group)) +
-  geom_point(size = 4, alpha = 0.3) +
+  geom_point(size = 2, alpha = 0.3) +
   geom_smooth(se = FALSE, method = "gam")
 ```
 
@@ -499,7 +504,7 @@ predict_gam(compare, series = "x", length_out = 30) %>% plot(comparison = "group
 layout: false
 class: center middle inverse
 
-# HANDS-ON 1
+## HANDS-ON 1
 
 ---
 
@@ -528,7 +533,6 @@ acch <- read_delim("data/ACCH.txt") %>%
     RT_log = log(StimSlide.RT),
     ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
   )
-
 acch
 ```
 
@@ -567,8 +571,7 @@ summary(rt_gam)
 
 ```{r rt-gam-plot}
 # library(tidygam)
-predict_gam(rt_gam, series = "Trial", length_out = 50) %>%
-  plot(comparison = "Gr_St")
+predict_gam(rt_gam, series = "Trial", length_out = 50) %>% plot(comparison = "Gr_St")
 ```
 
 ---
@@ -576,34 +579,27 @@ predict_gam(rt_gam, series = "Trial", length_out = 50) %>%
 ```{r rt-gam-plot-2}
 predict_gam(rt_gam, series = "Trial", length_out = 50,
             separate = list(Gr_St = c("Group", "Structure"))) %>%
-  plot(comparison = "Group") +
-  facet_grid(Structure ~ .)
+  plot(comparison = "Group") + facet_grid(Structure ~ .)
 ```
 
 ---
 
 ```{r rt-gam-diff}
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))
-) %>%
+get_difference(rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))) %>%
   plot()
 ```
 
 ---
 
 ```{r rt-gam-diff-2}
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
-) %>%
+get_difference(rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))) %>%
   plot()
 ```
 
 ---
 
 ```{r rt-gam-diff-3}
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
-) %>%
+get_difference(rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))) %>%
   plot()
 ```
 
@@ -618,8 +614,8 @@ layout: true
 
 |                 | LM      | GAM                    |
 |-----------------|---------|------------------------|
-| Num × cat       | `num:cat` | `s(num, by = "cat")`     |
-| Num × cat × cat | `num:cat:cat` | `s(num, by = "cat_cat")` |
+| Num × cat       | `num:cat` | `s(num, by = cat)`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = cat_cat)` |
 
 ---
 
@@ -678,11 +674,7 @@ predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %>%
 ---
 
 ```{r f0-gam-plot-3}
-predict_gam(f0_gam) %>%
-  plot(
-    series = c("time_point", "duration"),
-    raster_interp = TRUE
-  )
+predict_gam(f0_gam) %>% plot(series = c("time_point", "duration"), raster_interp = TRUE)
 ```
 
 ---
@@ -690,7 +682,7 @@ predict_gam(f0_gam) %>%
 layout: false
 class: center middle inverse
 
-# HANDS-ON 2
+## HANDS-ON 2
 
 ---
 
@@ -739,14 +731,15 @@ rt_gam_2 <- gam(
 
 ---
 
+.medium[
 ```{r rt-gam-2-sum}
 summary(rt_gam_2)
 ```
-
+]
 
 ---
 
-```{r rt-gam-2-plot}
+```{r rt-gam-2-plot, fig.show='hide'}
 predict_gam(
   rt_gam_2,
   separate = list(Gr_St = c("Group", "Structure")),
@@ -760,6 +753,12 @@ predict_gam(
 
 ---
 
+class: center middle
+
+![:scale 60%](`r knitr::fig_chunk('rt-gam-2-plot', 'png')`)
+
+---
+
 ```{r rt-gam-2-diff, eval=FALSE}
 get_difference(
   rt_gam_2, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
@@ -767,19 +766,26 @@ get_difference(
   plot()
 ```
 
+Due to a bug in the `get_difference()` function, you get an error when there is no significant difference across the entire smooth (I am hoping to fix this asap).
 
 ---
 
 ```{r rt-gam-2-diff-2}
-get_difference(
-  rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
-) %>%
+get_difference(rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))) %>%
   plot()
 ```
 
 ---
 
 layout: false
+class: center middle inverse
+
+## HANDS-ON 3
+
+---
+
+layout: false
+layout: true
 
 ## GAMs with binomial/Bernoulli families
 
@@ -797,14 +803,15 @@ acc_gam_2 <- gam(
 
 ---
 
+.medium[
 ```{r acc-gam-2-sum}
 summary(acc_gam_2)
 ```
-
+]
 
 ---
 
-```{r acc-gam-2-plot}
+```{r acc-gam-2-plot, fig.show='hide'}
 predict_gam(
   acc_gam_2,
   separate = list(Gr_St = c("Group", "Structure")),
@@ -818,7 +825,13 @@ predict_gam(
 
 ---
 
+class: center middle
+
+![:scale 60%](`r knitr::fig_chunk('acc-gam-2-plot', 'png')`)
+
+---
+
 layout: false
 class: center middle inverse
 
-# HANDS-ON 3
+## HANDS-ON 4

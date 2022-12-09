@@ -12,6 +12,7 @@
     <script src="index_files/xaringanExtra-freezeframe/freezeframe-init.js"></script>
     <script id="xaringanExtra-freezeframe-options" type="application/json">{"selector":"img[src$=\"gif\"]","trigger":"click","overlay":false,"responsive":true,"warnings":true}</script>
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
   </head>
   <body>
     <textarea id="source">
@@ -38,25 +39,12 @@ class: center, middle, inverse, title-slide
 
 
 
-```r
-set.seed(8788)
-x &lt;- seq(0,100,1)
-y &lt;- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(101, 0, 1)
-x_1 &lt;- seq(0, 100, 1)
-y_1 &lt;- ((runif(1, 10, 20) * x_1) / (runif(1, 0, 100) + x_1)) + rnorm(101, 0, 1)
 
-sim_nl &lt;- tibble(
-  x = c(x, x_1),
-  y = c(y, y_1),
-  group = rep(c("a", "b"), each = 101)
-)
+class: inverse
+background-image: url(../img/time-travel.jpg)
+background-size: contain
 
-sim_nl_a &lt;- filter(sim_nl, group == "a")
-```
-
-class: center middle inverse
-
-.f1[Time travel...]
+# Time travel...
 
 ---
 
@@ -72,28 +60,9 @@ where `\(x = (2, 4, 5, 8, 10, 23, 36)\)`
 
 ---
 
-
-```r
-line &lt;- tibble(
-  x = c(2, 4, 5, 8, 10, 23, 36),
-  y = 3 + 2 * x
-)
-ggplot(line, aes(x, y)) +
-  geom_point(size = 4) +
-  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
-```
-
 &lt;img src="index_files/figure-html/homework-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-ggplot(line, aes(x, y)) +
-  geom_point(colour = "gray", size = 4) +
-  geom_line(colour = "red") +
-  labs(title = bquote(italic(y) == 3 + 2 * italic(x)))
-```
 
 &lt;img src="index_files/figure-html/line-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -104,22 +73,6 @@ ggplot(line, aes(x, y)) +
 * For example, vowel duration and VOT, speech rate and pitch, etc.
 
 ---
-
-
-```r
-set.seed(4321)
-x &lt;- 1:10
-y &lt;- (1 + 1.5 * x) + rnorm(10, 0, 1)
-
-line &lt;- tibble(
-  x = x,
-  y = y
-)
-ggplot(line, aes(x, y)) +
-  geom_point(size = 4) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == "?" + "?" * italic(x)))
-```
 
 &lt;img src="index_files/figure-html/sampled-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -145,31 +98,9 @@ ggplot(line, aes(x, y)) +
 
 ---
 
-
-```r
-ggplot(line, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote({italic(y) == beta[0] + beta[1] * italic(x)} == 1 + 1.5 * italic(x)))
-```
-
 &lt;img src="index_files/figure-html/lm-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-m &lt;- lm(y ~ x)
-yhat &lt;- m$fitted.values
-diff &lt;- y - yhat  
-ggplot(line, aes(x, y)) +
-  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + epsilon))
-```
 
 &lt;img src="index_files/figure-html/error-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -182,40 +113,13 @@ layout: true
 
 ---
 
-
-```r
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_point(size = 4) +
-  labs(title = "Some non-linear data")
-```
-
 &lt;img src="index_files/figure-html/plot-data-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
-
-```r
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Some non-linear data")
-```
-
 &lt;img src="index_files/figure-html/plot-lm-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-m &lt;- lm(y ~ x, data = sim_nl_a)
-yhat &lt;- m$fitted.values
-diff &lt;- sim_nl_a$y - yhat  
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_segment(aes(x = x, xend = x, y = y, yend = yhat), colour = "red") +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Some non-linear data")
-```
 
 &lt;img src="index_files/figure-html/error-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -232,64 +136,21 @@ How to account for non-linearity in a linear model?
 
 ---
 
-
-```r
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2))
-```
-
 &lt;img src="index_files/figure-html/2-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3)) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3))
-```
 
 &lt;img src="index_files/figure-html/3-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
-
-```r
-ggplot(sim_nl_a, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10))
-```
-
 &lt;img src="index_files/figure-html/10-poly-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
 
-
-```r
-ggplot(line, aes(x, y)) +
-  geom_point(size = 4) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
-  ylim(1, 18)
-```
-
 &lt;img src="index_files/figure-html/10-poly-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-ggplot(line, aes(x, y)) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", se = FALSE, formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10)) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = bquote(italic(y) == beta[0] + beta[1] * italic(x) + beta[2] * italic(x) ^ 2 + beta[3] * italic(x) ^ 3 + beta[4] * italic(x) ^ 4 + beta[5] * italic(x) ^ 5 + beta[6] * italic(x) ^ 6 + beta[7] * italic(x) ^ 7 + beta[8] * italic(x) ^ 8 + beta[9] * italic(x) ^ 9 + beta[10] * italic(x) ^ 10)) +
-  ylim(1, 18)
-```
 
 &lt;img src="index_files/figure-html/10-poly-21-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -344,43 +205,6 @@ layout: false
 ---
 
 ## Basis functions and knots
-
-
-```r
-par(mfrow = c(1, 2))
-
-simple &lt;- gam(y ~ s(x, bs = "cr", k = 10), data = sim_nl_a)
-
-X &lt;- predict(
-  simple,
-  newdata = data.frame(x = sim_nl_a$x),
-  type = "lpmatrix"
-)[,2:10]
-
-plot(sim_nl_a$x, X[, 1], type = "n", ylim = c(-2, 3), xlab = "x", ylab = "y")
-for (i in 1:ncol(X)) {
-  lines(sim_nl_a$x, X[, i], col = i, lw = 1)
-}
-
-X2 &lt;- X %*% diag(coef(simple)[2:10])
-plot(
-  sim_nl_a$x,
-  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
-    coef(simple)[1],
-  type = "n",
-  ylim = c(-8, 3),
-  xlab = "x", ylab = "y"
-)
-for (i in 1:ncol(X2)) {
-  lines(sim_nl_a$x, X2[, i], col = i, lw = 1)
-}
-lines(
-  sim_nl_a$x,
-  predict(simple, newdata = data.frame(x = sim_nl_a$x)) -
-    coef(simple)[1],
-  lw = 3
-)
-```
 
 &lt;img src="index_files/figure-html/basis-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -484,22 +308,9 @@ layout: true
 
 ---
 
-
-```r
-ggplot(sim_nl, aes(x, y, colour = group)) +
-  geom_point(size = 4)
-```
-
 &lt;img src="index_files/figure-html/nl-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
 ---
-
-
-```r
-ggplot(sim_nl, aes(x, y, colour = group)) +
-  geom_point(size = 4, alpha = 0.3) +
-  geom_smooth(se = FALSE, method = "gam")
-```
 
 &lt;img src="index_files/figure-html/nl-smooth-1.png" width="60%" style="display: block; margin: auto;" /&gt;
 
@@ -602,7 +413,7 @@ predict_gam(compare, series = "x", length_out = 30) %&gt;% plot(comparison = "gr
 layout: false
 class: center middle inverse
 
-# HANDS-ON 1
+## HANDS-ON 1
 
 ---
 
@@ -632,7 +443,6 @@ acch &lt;- read_delim("data/ACCH.txt") %&gt;%
     RT_log = log(StimSlide.RT),
     ACC = ifelse(StimSlide.ACC == 0, "incorrect", "correct")
   )
-
 acch
 ```
 
@@ -728,8 +538,7 @@ summary(rt_gam)
 
 ```r
 # library(tidygam)
-predict_gam(rt_gam, series = "Trial", length_out = 50) %&gt;%
-  plot(comparison = "Gr_St")
+predict_gam(rt_gam, series = "Trial", length_out = 50) %&gt;% plot(comparison = "Gr_St")
 ```
 
 &lt;img src="index_files/figure-html/rt-gam-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
@@ -740,8 +549,7 @@ predict_gam(rt_gam, series = "Trial", length_out = 50) %&gt;%
 ```r
 predict_gam(rt_gam, series = "Trial", length_out = 50,
             separate = list(Gr_St = c("Group", "Structure"))) %&gt;%
-  plot(comparison = "Group") +
-  facet_grid(Structure ~ .)
+  plot(comparison = "Group") + facet_grid(Structure ~ .)
 ```
 
 &lt;img src="index_files/figure-html/rt-gam-plot-2-1.png" width="60%" style="display: block; margin: auto;" /&gt;
@@ -750,9 +558,7 @@ predict_gam(rt_gam, series = "Trial", length_out = 50,
 
 
 ```r
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))
-) %&gt;%
+get_difference(rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "monolingual.Object"))) %&gt;%
   plot()
 ```
 
@@ -762,9 +568,7 @@ get_difference(
 
 
 ```r
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))
-) %&gt;%
+get_difference(rt_gam, "Trial", list(Gr_St = c("bilingual.Object", "bilingual.Subject"))) %&gt;%
   plot()
 ```
 
@@ -774,9 +578,7 @@ get_difference(
 
 
 ```r
-get_difference(
-  rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
-) %&gt;%
+get_difference(rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))) %&gt;%
   plot()
 ```
 
@@ -793,8 +595,8 @@ layout: true
 
 |                 | LM      | GAM                    |
 |-----------------|---------|------------------------|
-| Num × cat       | `num:cat` | `s(num, by = "cat")`     |
-| Num × cat × cat | `num:cat:cat` | `s(num, by = "cat_cat")` |
+| Num × cat       | `num:cat` | `s(num, by = cat)`     |
+| Num × cat × cat | `num:cat:cat` | `s(num, by = cat_cat)` |
 
 ---
 
@@ -880,11 +682,7 @@ predict_gam(f0_gam, values = list(duration = c(50, 100, 150, 200))) %&gt;%
 
 
 ```r
-predict_gam(f0_gam) %&gt;%
-  plot(
-    series = c("time_point", "duration"),
-    raster_interp = TRUE
-  )
+predict_gam(f0_gam) %&gt;% plot(series = c("time_point", "duration"), raster_interp = TRUE)
 ```
 
 &lt;img src="index_files/figure-html/f0-gam-plot-3-1.png" width="60%" style="display: block; margin: auto;" /&gt;
@@ -894,7 +692,7 @@ predict_gam(f0_gam) %&gt;%
 layout: false
 class: center middle inverse
 
-# HANDS-ON 2
+## HANDS-ON 2
 
 ---
 
@@ -945,6 +743,7 @@ rt_gam_2 &lt;- gam(
 
 ---
 
+.medium[
 
 ```r
 summary(rt_gam_2)
@@ -980,7 +779,7 @@ summary(rt_gam_2)
 ## R-sq.(adj) =  0.0301   Deviance explained = 3.61%
 ## GCV = 0.13803  Scale est. = 0.13714   n = 4796
 ```
-
+]
 
 ---
 
@@ -997,7 +796,11 @@ predict_gam(
   facet_grid(~ Group)
 ```
 
-&lt;img src="index_files/figure-html/rt-gam-2-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+---
+
+class: center middle
+
+![:scale 60%](index_files/figure-html/rt-gam-2-plot-1.png)
 
 ---
 
@@ -1009,14 +812,13 @@ get_difference(
   plot()
 ```
 
+Due to a bug in the `get_difference()` function, you get an error when there is no significant difference across the entire smooth (I am hoping to fix this asap).
 
 ---
 
 
 ```r
-get_difference(
-  rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))
-) %&gt;%
+get_difference(rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monolingual.Subject"))) %&gt;%
   plot()
 ```
 
@@ -1025,6 +827,14 @@ get_difference(
 ---
 
 layout: false
+class: center middle inverse
+
+## HANDS-ON 3
+
+---
+
+layout: false
+layout: true
 
 ## GAMs with binomial/Bernoulli families
 
@@ -1043,6 +853,7 @@ acc_gam_2 &lt;- gam(
 
 ---
 
+.medium[
 
 ```r
 summary(acc_gam_2)
@@ -1075,7 +886,7 @@ summary(acc_gam_2)
 ## R-sq.(adj) =  0.0722   Deviance explained = 12.8%
 ## UBRE = -0.45342  Scale est. = 1         n = 4796
 ```
-
+]
 
 ---
 
@@ -1092,17 +903,22 @@ predict_gam(
   facet_grid(~ Group)
 ```
 
-&lt;img src="index_files/figure-html/acc-gam-2-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+---
+
+class: center middle
+
+![:scale 60%](index_files/figure-html/acc-gam-2-plot-1.png)
 
 ---
 
 layout: false
 class: center middle inverse
 
-# HANDS-ON 3
+## HANDS-ON 4
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
 <script>var slideshow = remark.create({
 "highlightStyle": "github",
 "highlightLines": true,

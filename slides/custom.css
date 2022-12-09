@@ -1,0 +1,15 @@
+.huge .remark-code {
+  font-size: 200% !important;
+}
+
+.big .remark-code {
+  font-size: 70% !important;
+}
+
+.medium .remark-code {
+  font-size: 60% !important;
+}
+
+.tiny .remark-code {
+  font-size: 50% !important;
+}
