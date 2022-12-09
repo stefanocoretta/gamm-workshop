@@ -28,7 +28,7 @@ class: center, middle, inverse, title-slide
 ### Dr Stefano Coretta
 ]
 .date[
-### 12-15 December 2022
+### 12-14 December 2022
 ]
 
 ---
@@ -706,7 +706,11 @@ layout: true
 
 * **G**eneralised **A**dditive **M**ixed **M**odel (GAMM)
 
-* Include a **random smooth** term with the **factor smooth interaction** as basis.
+* Two ways of including random effects:
+
+  * Use the `"re"` basis function for random intercept and slopes.
+
+  * Include a **random smooth** term with the **factor smooth interaction** as basis (`bs = "fs"`).
 
 ---
 
@@ -727,6 +731,7 @@ acch &lt;- acch %&gt;%
 
 contrasts(acch$Structure_o) &lt;- "contr.treatment"
 ```
+
 
 ---
 
@@ -798,9 +803,9 @@ predict_gam(
 
 ---
 
-class: center middle
-
+.center[
 ![:scale 60%](index_files/figure-html/rt-gam-2-plot-1.png)
+]
 
 ---
 
@@ -826,6 +831,235 @@ get_difference(rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monoling
 
 ---
 
+
+```r
+pdq_20 &lt;- readRDS("data/pdq_20.rds") %&gt;%
+  mutate(
+    subject = as.factor(subject),
+    Co_Ag = as.ordered(interaction(Condition, Age))
+  )
+pdq_20
+```
+
+```
+## # A tibble: 88,008 × 8
+##    subject trial Condition Age   timebins Soundfile            pupil.bin…¹ Co_Ag
+##    &lt;fct&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;    &lt;dbl&gt; &lt;chr&gt;                      &lt;dbl&gt; &lt;ord&gt;
+##  1 1           1 Sparse    YA        -500 NAMword_675_Mule.wav      84.5   Spar…
+##  2 1           1 Sparse    YA        -480 NAMword_675_Mule.wav      75.8   Spar…
+##  3 1           1 Sparse    YA        -460 NAMword_675_Mule.wav      65.4   Spar…
+##  4 1           1 Sparse    YA        -440 NAMword_675_Mule.wav      54.3   Spar…
+##  5 1           1 Sparse    YA        -420 NAMword_675_Mule.wav      35.7   Spar…
+##  6 1           1 Sparse    YA        -400 NAMword_675_Mule.wav      20.2   Spar…
+##  7 1           1 Sparse    YA        -380 NAMword_675_Mule.wav       8.72  Spar…
+##  8 1           1 Sparse    YA        -360 NAMword_675_Mule.wav       0.680 Spar…
+##  9 1           1 Sparse    YA        -340 NAMword_675_Mule.wav     -11.4   Spar…
+## 10 1           1 Sparse    YA        -320 NAMword_675_Mule.wav     -23.3   Spar…
+## # … with 87,998 more rows, and abbreviated variable name ¹​pupil.binned
+```
+
+---
+
+
+```r
+pdq_gam_2 &lt;- bam(
+  pupil.binned ~
+    Co_Ag + s(trial) + s(trial, by = Co_Ag) +
+    s(trial, subject, bs = "fs", m = 1),
+  data = pdq_20,
+  method = "fREML"
+)
+```
+
+---
+
+
+```r
+summary(pdq_gam_2)
+```
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## pupil.binned ~ Co_Ag + s(trial) + s(trial, by = Co_Ag) + s(trial, 
+##     subject, bs = "fs", m = 1)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)   -27.58      30.59  -0.902    0.367
+## Co_Ag.L        70.82      55.18   1.283    0.199
+## Co_Ag.Q       305.17      33.32   9.159   &lt;2e-16
+## Co_Ag.C      -362.05      42.54  -8.511   &lt;2e-16
+## 
+## Approximate significance of smooth terms:
+##                             edf  Ref.df       F  p-value
+## s(trial)                  8.537   8.577  21.488  &lt; 2e-16
+## s(trial):Co_AgSparse.OA   8.939   8.986  38.045  &lt; 2e-16
+## s(trial):Co_AgDense.YA    7.445   7.554   7.836 2.23e-05
+## s(trial):Co_AgSparse.YA   7.691   7.783  10.760  &lt; 2e-16
+## s(trial,subject)        168.348 178.000 140.639  &lt; 2e-16
+## 
+## R-sq.(adj) =  0.251   Deviance explained = 25.2%
+## fREML = 6.1948e+05  Scale est. = 74604     n = 88008
+```
+
+---
+
+
+```r
+predict_gam(
+  pdq_gam_2,
+  separate = list(Co_Ag = c("Condition", "Age")),
+  exclude_terms = c("s(trial,subject)"),
+  length_out = 50) %&gt;%
+  plot(series = "trial", comparison = "Condition") +
+  facet_grid(~ Age)
+```
+
+---
+
+.center[
+![:scale 60%](index_files/figure-html/pdq-gam-2-plot-1.png)
+]
+
+---
+
+
+```r
+gam.check(pdq_gam_2)
+```
+
+&lt;img src="index_files/figure-html/pdq-gam-2-check-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+```
+## 
+## Method: fREML   Optimizer: perf newton
+## full convergence after 16 iterations.
+## Gradient range [-4.080436e-05,6.895202e-05]
+## (score 619477.1 &amp; scale 74604.25).
+## Hessian positive definite, eigenvalue range [0.2772215,44000.13].
+## Model rank =  220 / 220 
+## 
+## Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+## indicate that k is too low, especially if edf is close to k'.
+## 
+##                             k'    edf k-index p-value
+## s(trial)                  9.00   8.54    0.96  &lt;2e-16
+## s(trial):Co_AgSparse.OA   9.00   8.94    0.96   0.005
+## s(trial):Co_AgDense.YA    9.00   7.44    0.96  &lt;2e-16
+## s(trial):Co_AgSparse.YA   9.00   7.69    0.96  &lt;2e-16
+## s(trial,subject)        180.00 168.35    0.96  &lt;2e-16
+```
+
+---
+
+```
+Method: fREML   Optimizer: perf newton
+full convergence after 16 iterations.
+Gradient range [-4.080436e-05,6.895202e-05]
+(score 619477.1 &amp; scale 74604.25).
+Hessian positive definite, eigenvalue range [0.2772215,44000.13].
+Model rank =  220 / 220 
+
+Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+indicate that k is too low, especially if edf is close to k'.
+
+                            k'    edf k-index p-value
+s(trial)                  9.00   8.54    0.98   0.050
+s(trial):Co_AgSparse.OA   9.00   8.94    0.98   0.055
+s(trial):Co_AgDense.YA    9.00   7.44    0.98   0.035
+s(trial):Co_AgSparse.YA   9.00   7.69    0.98   0.065
+s(trial,subject)        180.00 168.35    0.98   0.070
+```
+
+
+---
+
+
+```r
+pdq_gam_3 &lt;- bam(
+  pupil.binned ~
+    Co_Ag + s(trial, k = 15) + s(trial, by = Co_Ag, k = 15) +
+    s(trial, subject, bs = "fs", m = 1),
+  data = pdq_20,
+  method = "fREML"
+)
+```
+
+---
+
+
+```r
+gam.check(pdq_gam_3)
+```
+
+&lt;img src="index_files/figure-html/pdq-gam-3-check-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+```
+## 
+## Method: fREML   Optimizer: perf newton
+## full convergence after 11 iterations.
+## Gradient range [-0.001896662,0.0002222863]
+## (score 618012.1 &amp; scale 72239.12).
+## Hessian positive definite, eigenvalue range [2.199531,44000.13].
+## Model rank =  240 / 240 
+## 
+## Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+## indicate that k is too low, especially if edf is close to k'.
+## 
+##                            k'   edf k-index p-value
+## s(trial)                 14.0  11.3    0.99    0.14
+## s(trial):Co_AgSparse.OA  14.0  12.6    0.99    0.15
+## s(trial):Co_AgDense.YA   14.0  13.3    0.99    0.17
+## s(trial):Co_AgSparse.YA  14.0  13.2    0.99    0.20
+## s(trial,subject)        180.0 165.2    0.99    0.17
+```
+
+---
+
+```
+Method: fREML   Optimizer: perf newton
+full convergence after 11 iterations.
+Gradient range [-0.001896662,0.0002222863]
+(score 618012.1 &amp; scale 72239.12).
+Hessian positive definite, eigenvalue range [2.199531,44000.13].
+Model rank =  240 / 240 
+
+Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+indicate that k is too low, especially if edf is close to k'.
+
+                           k'   edf k-index p-value
+s(trial)                 14.0  11.3       1    0.60
+s(trial):Co_AgSparse.OA  14.0  12.6       1    0.53
+s(trial):Co_AgDense.YA   14.0  13.3       1    0.53
+s(trial):Co_AgSparse.YA  14.0  13.2       1    0.58
+s(trial,subject)        180.0 165.2       1    0.59
+```
+
+---
+
+
+```r
+predict_gam(
+  pdq_gam_3,
+  separate = list(Co_Ag = c("Condition", "Age")),
+  exclude_terms = c("s(trial,subject)"),
+  length_out = 50) %&gt;%
+  plot(series = "trial", comparison = "Condition") +
+  facet_grid(~ Age)
+```
+
+---
+
+.center[
+![:scale 60%](index_files/figure-html/pdq-gam-3-plot-1.png)
+]
+
+---
+
 layout: false
 class: center middle inverse
 
@@ -840,9 +1074,46 @@ layout: true
 
 ---
 
+* So far we've been looking at GAM(M)s with a Gaussian family.
+
+--
+
+* GAM(M)s can also be fitted to binomial/Bernoulli data!
+
+  * `family = binomial()`
+  
+  * This is like a logistic regression fitted with `glm(er)`, but it allows for non-linear effects.
+
+---
+
 
 ```r
-acc_gam_2 &lt;- gam(
+acch %&gt;% select(Subject, Group, Trial, ACC, Structure, Number)
+```
+
+```
+## # A tibble: 4,796 × 6
+##    Subject Group       Trial ACC       Structure Number
+##      &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;     &lt;chr&gt; 
+##  1     202 monolingual     1 correct   Subject   Match 
+##  2     202 monolingual     1 correct   Subject   Match 
+##  3     202 monolingual    15 incorrect Subject   Match 
+##  4     202 monolingual    26 correct   Subject   Match 
+##  5     202 monolingual    15 correct   Subject   Match 
+##  6     202 monolingual    33 correct   Subject   Match 
+##  7     202 monolingual    23 correct   Subject   Match 
+##  8     202 monolingual    26 correct   Subject   Match 
+##  9     202 monolingual    28 correct   Subject   Match 
+## 10     202 monolingual    24 correct   Subject   Match 
+## # … with 4,786 more rows
+```
+
+
+---
+
+
+```r
+acc_gam_2 &lt;- bam(
   StimSlide.ACC ~
     Gr_St + s(Trial) + s(Trial, by = Gr_St) +
     s(Trial, Subject, bs = "fs", m = 1),
@@ -870,21 +1141,21 @@ summary(acc_gam_2)
 ## 
 ## Parametric coefficients:
 ##                          Estimate Std. Error z value Pr(&gt;|z|)
-## (Intercept)               2.82414    0.67629   4.176 2.97e-05
-## Gr_Stmonolingual.Object  -1.80257    1.12546  -1.602    0.109
-## Gr_Stbilingual.Subject    2.11279    0.24017   8.797  &lt; 2e-16
-## Gr_Stmonolingual.Subject  0.05691    1.13643   0.050    0.960
+## (Intercept)               2.84896    0.64918   4.389 1.14e-05
+## Gr_Stmonolingual.Object  -1.87898    1.07995  -1.740   0.0819
+## Gr_Stbilingual.Subject    2.11010    0.24004   8.791  &lt; 2e-16
+## Gr_Stmonolingual.Subject -0.05063    1.09055  -0.046   0.9630
 ## 
 ## Approximate significance of smooth terms:
-##                                      edf Ref.df Chi.sq  p-value
-## s(Trial)                           1.000  1.000  0.003 0.956402
-## s(Trial):Gr_Stmonolingual.Object   5.157  6.261  5.894 0.447924
-## s(Trial):Gr_Stbilingual.Subject    1.000  1.000  4.986 0.025566
-## s(Trial):Gr_Stmonolingual.Subject  5.132  6.214  9.032 0.186108
-## s(Trial,Subject)                  19.048 23.150 55.660 0.000175
+##                                      edf Ref.df Chi.sq p-value
+## s(Trial)                           1.000  1.000  0.014 0.90639
+## s(Trial):Gr_Stmonolingual.Object   1.000  1.000  0.075 0.78392
+## s(Trial):Gr_Stbilingual.Subject    1.000  1.000  4.996 0.02540
+## s(Trial):Gr_Stmonolingual.Subject  3.694  4.581 13.532 0.02071
+## s(Trial,Subject)                  17.476 22.441 48.815 0.00108
 ## 
-## R-sq.(adj) =  0.0722   Deviance explained = 12.8%
-## UBRE = -0.45342  Scale est. = 1         n = 4796
+## R-sq.(adj) =  0.0681   Deviance explained = 12.2%
+## fREML = 6708.4  Scale est. = 1         n = 4796
 ```
 ]
 
@@ -905,9 +1176,139 @@ predict_gam(
 
 ---
 
-class: center middle
-
+.center[
 ![:scale 60%](index_files/figure-html/acc-gam-2-plot-1.png)
+]
+
+---
+
+**Shallow Morphological Processing.**
+
+- English L1 and L2 speakers (L2 speakers are native speakers of Cantonese).
+
+- Lexical decision task (Word vs Non-Word).
+
+- Target: unkindness ([[un]-[kind]]-ness).
+
+- Primes: prolong (Unrelated), unkind (Constituent), kindness (Non-Constituent).
+
+---
+
+
+```r
+shallow &lt;- read_csv("data/shallow.csv")
+shallow
+```
+
+```
+## # A tibble: 1,950 × 9
+##    Group ID    List  Target         RT RT_log Relation_type  Branching accuracy 
+##    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;     &lt;chr&gt;    
+##  1 L1    L1_01 A     unawareness   603   6.40 Unrelated      Left      correct  
+##  2 L1    L1_01 A     unholiness    739   6.61 Constituent    Left      correct  
+##  3 L1    L1_01 A     unhappiness   370   5.91 Unrelated      Left      correct  
+##  4 L1    L1_01 A     unsharpness   821   6.71 Constituent    Left      correct  
+##  5 L1    L1_01 A     unripeness   1035   6.94 Unrelated      Left      incorrect
+##  6 L1    L1_01 A     undeniable    833   6.72 Unrelated      Right     correct  
+##  7 L1    L1_01 A     unskillful    740   6.61 Constituent    Right     correct  
+##  8 L1    L1_01 A     unkindness    498   6.21 NonConstituent Left      correct  
+##  9 L1    L1_01 A     unwariness   1133   7.03 NonConstituent Left      correct  
+## 10 L1    L1_01 A     unclearness   513   6.24 Constituent    Left      correct  
+## # … with 1,940 more rows
+```
+
+---
+
+&lt;img src="index_files/figure-html/shallow-plot-1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+shallow &lt;- shallow %&gt;%
+  mutate(
+    Gr_Rel = as.ordered(interaction(Group, Relation_type)),
+    ID = as.factor(ID),
+    accuracy = factor(accuracy, levels = c("incorrect", "correct"))
+  )
+contrasts(shallow$Gr_Rel) &lt;- "contr.treatment"
+```
+
+
+---
+
+
+```r
+sha_gam &lt;- bam(
+  accuracy ~
+    Gr_Rel +
+    s(RT_log) + s(RT_log, by = Gr_Rel) +
+    s(ID, bs = "re") + s(ID, RT_log, bs = "re"),
+  data = shallow,
+  family = binomial(),
+  method = "fREML"
+)
+```
+
+---
+
+
+```r
+summary(sha_gam)
+```
+
+```
+## 
+## Family: binomial 
+## Link function: logit 
+## 
+## Formula:
+## accuracy ~ Gr_Rel + s(RT_log) + s(RT_log, by = Gr_Rel) + s(ID, 
+##     bs = "re") + s(ID, RT_log, bs = "re")
+## 
+## Parametric coefficients:
+##                         Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)               2.1299     0.2301   9.258  &lt; 2e-16
+## Gr_RelL2.Constituent      0.2720     0.3249   0.837  0.40238
+## Gr_RelL1.NonConstituent  -0.8558     0.2713  -3.154  0.00161
+## Gr_RelL2.NonConstituent  -0.6001     0.3294  -1.822  0.06847
+## Gr_RelL1.Unrelated       -0.4892     0.2453  -1.994  0.04616
+## Gr_RelL2.Unrelated       -0.4517     0.2940  -1.536  0.12449
+## 
+## Approximate significance of smooth terms:
+##                                         edf Ref.df Chi.sq  p-value
+## s(RT_log)                         1.000e+00  1.000 15.878 6.77e-05
+## s(RT_log):Gr_RelL2.Constituent    1.616e+00  2.018  0.778   0.6628
+## s(RT_log):Gr_RelL1.NonConstituent 1.476e+00  1.810  2.707   0.3116
+## s(RT_log):Gr_RelL2.NonConstituent 1.000e+00  1.000  0.889   0.3457
+## s(RT_log):Gr_RelL1.Unrelated      1.935e+00  2.458  2.953   0.3914
+## s(RT_log):Gr_RelL2.Unrelated      1.000e+00  1.000  5.084   0.0242
+## s(ID)                             3.667e+01 63.000 91.863  &lt; 2e-16
+## s(ID,RT_log)                      3.737e-04 63.000  0.000   0.4919
+## 
+## R-sq.(adj) =  0.114   Deviance explained = 14.9%
+## fREML =   2638  Scale est. = 1         n = 1920
+```
+
+---
+
+
+```r
+predict_gam(
+  sha_gam,
+  exclude_terms = c("s(ID)", "s(ID,RT_log)"),
+  separate = list(Gr_Rel = c("Group", "Relation_type")),
+  tran_fun = plogis, length_out = 50
+) %&gt;%
+  plot(series = "RT_log", comparison = "Relation_type") +
+  facet_grid(~ Group)
+```
+
+---
+
+.center[
+![:scale 60%](index_files/figure-html/sha-gam-plot-1.png)
+]
 
 ---
 

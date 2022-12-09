@@ -2,7 +2,7 @@
 title: "Introduction to GAM(M)S"
 subtitle: "Generalised Additive (Mixed) Models"
 author: "Dr Stefano Coretta"
-date: "12-15 December 2022"
+date: "12-14 December 2022"
 output:
   xaringan::moon_reader:
     css:
@@ -696,7 +696,11 @@ layout: true
 
 * **G**eneralised **A**dditive **M**ixed **M**odel (GAMM)
 
-* Include a **random smooth** term with the **factor smooth interaction** as basis.
+* Two ways of including random effects:
+
+  * Use the `"re"` basis function for random intercept and slopes.
+
+  * Include a **random smooth** term with the **factor smooth interaction** as basis (`bs = "fs"`).
 
 ---
 
@@ -716,6 +720,7 @@ acch <- acch %>%
 
 contrasts(acch$Structure_o) <- "contr.treatment"
 ```
+
 
 ---
 
@@ -753,9 +758,9 @@ predict_gam(
 
 ---
 
-class: center middle
-
+.center[
 ![:scale 60%](`r knitr::fig_chunk('rt-gam-2-plot', 'png')`)
+]
 
 ---
 
@@ -777,6 +782,138 @@ get_difference(rt_gam_2, "Trial", list(Gr_St = c("monolingual.Object", "monoling
 
 ---
 
+```{r pdq-20}
+pdq_20 <- readRDS("data/pdq_20.rds") %>%
+  mutate(
+    subject = as.factor(subject),
+    Co_Ag = as.ordered(interaction(Condition, Age))
+  )
+pdq_20
+```
+
+---
+
+```{r pdq-gam-2, cache=TRUE}
+pdq_gam_2 <- bam(
+  pupil.binned ~
+    Co_Ag + s(trial) + s(trial, by = Co_Ag) +
+    s(trial, subject, bs = "fs", m = 1),
+  data = pdq_20,
+  method = "fREML"
+)
+```
+
+---
+
+```{r pdq-gam-2-sum}
+summary(pdq_gam_2)
+```
+
+---
+
+```{r pdq-gam-2-plot, fig.show='hide'}
+predict_gam(
+  pdq_gam_2,
+  separate = list(Co_Ag = c("Condition", "Age")),
+  exclude_terms = c("s(trial,subject)"),
+  length_out = 50) %>%
+  plot(series = "trial", comparison = "Condition") +
+  facet_grid(~ Age)
+```
+
+---
+
+.center[
+![:scale 60%](`r knitr::fig_chunk('pdq-gam-2-plot', 'png')`)
+]
+
+---
+
+```{r pdq-gam-2-check, cache=TRUE}
+gam.check(pdq_gam_2)
+```
+
+---
+
+```
+Method: fREML   Optimizer: perf newton
+full convergence after 16 iterations.
+Gradient range [-4.080436e-05,6.895202e-05]
+(score 619477.1 & scale 74604.25).
+Hessian positive definite, eigenvalue range [0.2772215,44000.13].
+Model rank =  220 / 220 
+
+Basis dimension (k) checking results. Low p-value (k-index<1) may
+indicate that k is too low, especially if edf is close to k'.
+
+                            k'    edf k-index p-value
+s(trial)                  9.00   8.54    0.98   0.050
+s(trial):Co_AgSparse.OA   9.00   8.94    0.98   0.055
+s(trial):Co_AgDense.YA    9.00   7.44    0.98   0.035
+s(trial):Co_AgSparse.YA   9.00   7.69    0.98   0.065
+s(trial,subject)        180.00 168.35    0.98   0.070
+```
+
+
+---
+
+```{r pdq-gam-3, cache=TRUE}
+pdq_gam_3 <- bam(
+  pupil.binned ~
+    Co_Ag + s(trial, k = 15) + s(trial, by = Co_Ag, k = 15) +
+    s(trial, subject, bs = "fs", m = 1),
+  data = pdq_20,
+  method = "fREML"
+)
+```
+
+---
+
+```{r pdq-gam-3-check, cache=TRUE}
+gam.check(pdq_gam_3)
+```
+
+---
+
+```
+Method: fREML   Optimizer: perf newton
+full convergence after 11 iterations.
+Gradient range [-0.001896662,0.0002222863]
+(score 618012.1 & scale 72239.12).
+Hessian positive definite, eigenvalue range [2.199531,44000.13].
+Model rank =  240 / 240 
+
+Basis dimension (k) checking results. Low p-value (k-index<1) may
+indicate that k is too low, especially if edf is close to k'.
+
+                           k'   edf k-index p-value
+s(trial)                 14.0  11.3       1    0.60
+s(trial):Co_AgSparse.OA  14.0  12.6       1    0.53
+s(trial):Co_AgDense.YA   14.0  13.3       1    0.53
+s(trial):Co_AgSparse.YA  14.0  13.2       1    0.58
+s(trial,subject)        180.0 165.2       1    0.59
+```
+
+---
+
+```{r pdq-gam-3-plot, fig.show='hide'}
+predict_gam(
+  pdq_gam_3,
+  separate = list(Co_Ag = c("Condition", "Age")),
+  exclude_terms = c("s(trial,subject)"),
+  length_out = 50) %>%
+  plot(series = "trial", comparison = "Condition") +
+  facet_grid(~ Age)
+```
+
+---
+
+.center[
+![:scale 60%](`r knitr::fig_chunk('pdq-gam-3-plot', 'png')`)
+]
+
+---
+
 layout: false
 class: center middle inverse
 
@@ -791,8 +928,27 @@ layout: true
 
 ---
 
+* So far we've been looking at GAM(M)s with a Gaussian family.
+
+--
+
+* GAM(M)s can also be fitted to binomial/Bernoulli data!
+
+  * `family = binomial()`
+  
+  * This is like a logistic regression fitted with `glm(er)`, but it allows for non-linear effects.
+
+---
+
+```{r acch-2}
+acch %>% select(Subject, Group, Trial, ACC, Structure, Number)
+```
+
+
+---
+
 ```{r acc-gam-2, cache=TRUE}
-acc_gam_2 <- gam(
+acc_gam_2 <- bam(
   StimSlide.ACC ~
     Gr_St + s(Trial) + s(Trial, by = Gr_St) +
     s(Trial, Subject, bs = "fs", m = 1),
@@ -825,9 +981,89 @@ predict_gam(
 
 ---
 
-class: center middle
-
+.center[
 ![:scale 60%](`r knitr::fig_chunk('acc-gam-2-plot', 'png')`)
+]
+
+---
+
+**Shallow Morphological Processing.**
+
+- English L1 and L2 speakers (L2 speakers are native speakers of Cantonese).
+
+- Lexical decision task (Word vs Non-Word).
+
+- Target: unkindness ([[un]-[kind]]-ness).
+
+- Primes: prolong (Unrelated), unkind (Constituent), kindness (Non-Constituent).
+
+---
+
+```{r shallow}
+shallow <- read_csv("data/shallow.csv")
+shallow
+```
+
+---
+
+```{r shallow-plot, echo=FALSE}
+shallow %>%
+  ggplot(aes(Relation_type, fill = accuracy)) +
+  geom_bar(position = "fill") +
+  facet_grid(~ Group)
+```
+
+---
+
+```{r shallow-2}
+shallow <- shallow %>%
+  mutate(
+    Gr_Rel = as.ordered(interaction(Group, Relation_type)),
+    ID = as.factor(ID),
+    accuracy = factor(accuracy, levels = c("incorrect", "correct"))
+  )
+contrasts(shallow$Gr_Rel) <- "contr.treatment"
+```
+
+
+---
+
+```{r sha-gam, cache=TRUE}
+sha_gam <- bam(
+  accuracy ~
+    Gr_Rel +
+    s(RT_log) + s(RT_log, by = Gr_Rel) +
+    s(ID, bs = "re") + s(ID, RT_log, bs = "re"),
+  data = shallow,
+  family = binomial(),
+  method = "fREML"
+)
+```
+
+---
+
+```{r sha-gam-sum}
+summary(sha_gam)
+```
+
+---
+
+```{r sha-gam-plot, fig.show='hide'}
+predict_gam(
+  sha_gam,
+  exclude_terms = c("s(ID)", "s(ID,RT_log)"),
+  separate = list(Gr_Rel = c("Group", "Relation_type")),
+  tran_fun = plogis, length_out = 50
+) %>%
+  plot(series = "RT_log", comparison = "Relation_type") +
+  facet_grid(~ Group)
+```
+
+---
+
+.center[
+![:scale 60%](`r knitr::fig_chunk('sha-gam-plot', 'png')`)
+]
 
 ---
 
