@@ -14,3 +14,7 @@ Please, have the following software installed on your laptop.
     - `tidygam`: <https://github.com/stefanocoretta/tidygam>
 
 Be sure to update all of your other `R` packages.
+
+## Slides
+
+Slides can be found at <https://stefanocoretta.github.io/gamm-workshop/slides/>.
