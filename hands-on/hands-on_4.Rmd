@@ -1,0 +1,149 @@
+---
+title: "Hands-on 4"
+author: "Stefano Coretta"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = here::here())
+library(tidyverse)
+theme_set(theme_light())
+library(ggforce)
+options(ggplot2.discrete.fill = RColorBrewer::brewer.pal(8, "Dark2"))
+options(ggplot2.discrete.colour = RColorBrewer::brewer.pal(8, "Dark2"))
+library(mgcv)
+options(show.signif.stars = FALSE)
+library(tidygam)
+```
+
+## Massive Auditory Lexical Decision
+
+In this exercise you will use a subset of the data in the Massive Auditory Lexical Decision data set (https://doi.org/10.7939/r3-kh0r-r116).
+
+```{r mald}
+load("data/mald_1_1.rda")
+```
+
+The subset contains data from 50 subjects, 100 trials each:
+
+- `Subject`: the subject's ID.
+- `Item`: the target word.
+- `IsWord`: whether the target word is a real `"TRUE"` or a nonce word `"FALSE"`.
+- `PhonLev`: mean phonological Levenshtein distance (higher value means the word is more unique, i.e. a higher mean number of changes have to be applied to generate the other words).
+- `RT`: lexical decision reaction times in ms.
+- `ACC`: accuracy as `incorrect` or `correct`.
+- `RT_log`: logged reaction times.
+
+Let's model accuracy `ACC` with a binomial/Bernoulli GAMM as a function of `IsWord`, `PhonLev` and `RT_log`. We also want to include random smooths for `Subject`.
+
+First, create the necessary factor interactions.
+
+```{r}
+
+```
+
+Now fit the GAMM.
+
+```{r}
+
+```
+
+Check the model with `gam.check()`. Is the number of basis functions enough?
+
+```{r}
+
+```
+
+If everything is ok, get the predictions of the model and plot it.
+
+```{r}
+
+```
+
+What can you tell about the data based on the model summary and plots?
+
+
+## Infant gestures
+
+This exercise uses data from infants of Bengali, Chinese and English cultural backgrounds (<https://www.doi.org/10.1111/cdev.13406>).
+
+```{r gestures}
+load("data/gestures.rda")
+```
+
+- `dyad`: mother/infant dyad ID.
+- `background`: infant background (`Bengali`, `Chinese`, `English`).
+- `month`: age of infant in months (`10`, `11`, `12`).
+- `task`: task type (`five`, `tp1`, `tp2`), you can discard this variable.
+- `gesture`: type of gesture (`ho_gv` hold-out/give object, `point`ing with index finger, `reach` out with empty hand).
+- `count_raw`: number of gestures without pro-rata correction, you can discard this variable.
+- `count`: number of gestures.
+- `ct_raw`: number of mother's contingent talks without pro-rata correction, you can discard this variable.
+- `ct`: number of mother's contingent talks.
+- `pro_rata`: whether a pro-rata adjustment was applied, you can discard this variable.
+- `id`: ID of longitudinal trial.
+
+This time we want to model the number of gesture `count`. The appropriate distribution family for counts in the Poisson family.
+
+Models with a Poisson family return estimates in log-odds, similarly to what binomial/Bernoulli models do. While with binomial/Bernoulli estimates you use the `plogis()` function to go from log-odds to probabilities, you use the `exp()` function to convert log-odds to counts and odds.
+
+Let's first create the necessary variables.
+
+```{r gestures-ge-ba}
+gestures <- gestures %>%
+  mutate(
+    dyad = as.factor(dyad),
+    ge_ba = as.ordered(interaction(gesture, background))
+  )
+contrasts(gestures$ge_ba) <- "contr.treatment"
+```
+
+We can now fit a GAMM. Let's start simple.
+
+```{r gest-gam}
+gest_gam <- bam(
+  count ~
+    ge_ba +
+    # We need to set k to 3 because k cannot be higher than the number of
+    # unique values in the smoothing variable, here months.
+    s(months, k = 3) + s(months, by = ge_ba, k = 3) +
+    s(months, dyad, bs = "fs", m = 1, k = 3),
+  data = gestures,
+  family = poisson()
+)
+```
+
+```{r gest-gam-sum}
+summary(gest_gam)
+```
+
+Look at the parametric and smooth terms. What do they suggest?
+
+Let's check the model with `gam.check()`.
+
+```{r gest-gam-check}
+gam.check(gest_gam)
+```
+
+Things look OK (the number of basis functions is good enough, although in any case we couldn't have done much since we cannot increase k).
+
+Now time to plot! Fill the code below. Remember to specify the `tran_fun`, which needs to be `exp`, and to exclude the factor smooth. Feel free to pick comparison terms and facets.
+
+```{r gest-gam-plot}
+predict_gam(
+  gest_gam,
+  ...
+) %>%
+  plot(series = "months")
+```
+
+Great job!
+
+Now a challenge: fit another GAMM as the one above, but now include `ct` as a smooth, and a tensor product interaction between `ct` and `months`.
+
+```{r}
+
+```
+
