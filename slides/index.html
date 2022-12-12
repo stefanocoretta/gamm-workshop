@@ -838,6 +838,7 @@ pdq_20 &lt;- readRDS("data/pdq_20.rds") %&gt;%
     subject = as.factor(subject),
     Co_Ag = as.ordered(interaction(Condition, Age))
   )
+contrasts(pdq_20$Co_Ag) &lt;- "contr.treatment"
 pdq_20
 ```
 
@@ -888,11 +889,11 @@ summary(pdq_gam_2)
 ##     subject, bs = "fs", m = 1)
 ## 
 ## Parametric coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)
-## (Intercept)   -27.58      30.59  -0.902    0.367
-## Co_Ag.L        70.82      55.18   1.283    0.199
-## Co_Ag.Q       305.17      33.32   9.159   &lt;2e-16
-## Co_Ag.C      -362.05      42.54  -8.511   &lt;2e-16
+##                Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)      158.45      53.18   2.979  0.00289
+## Co_AgSparse.OA  -597.33      66.55  -8.976  &lt; 2e-16
+## Co_AgDense.YA    -79.92      66.48  -1.202  0.22934
+## Co_AgSparse.YA   -66.90      66.51  -1.006  0.31448
 ## 
 ## Approximate significance of smooth terms:
 ##                             edf  Ref.df       F  p-value
@@ -938,8 +939,8 @@ gam.check(pdq_gam_2)
 ## 
 ## Method: fREML   Optimizer: perf newton
 ## full convergence after 16 iterations.
-## Gradient range [-4.080436e-05,6.895202e-05]
-## (score 619477.1 &amp; scale 74604.25).
+## Gradient range [-4.080442e-05,6.895211e-05]
+## (score 619476.4 &amp; scale 74604.25).
 ## Hessian positive definite, eigenvalue range [0.2772215,44000.13].
 ## Model rank =  220 / 220 
 ## 
@@ -1003,7 +1004,7 @@ gam.check(pdq_gam_3)
 ## Method: fREML   Optimizer: perf newton
 ## full convergence after 11 iterations.
 ## Gradient range [-0.001896662,0.0002222863]
-## (score 618012.1 &amp; scale 72239.12).
+## (score 618011.4 &amp; scale 72239.12).
 ## Hessian positive definite, eigenvalue range [2.199531,44000.13].
 ## Model rank =  240 / 240 
 ## 

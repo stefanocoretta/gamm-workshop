@@ -788,6 +788,7 @@ pdq_20 <- readRDS("data/pdq_20.rds") %>%
     subject = as.factor(subject),
     Co_Ag = as.ordered(interaction(Condition, Age))
   )
+contrasts(pdq_20$Co_Ag) <- "contr.treatment"
 pdq_20
 ```
 
