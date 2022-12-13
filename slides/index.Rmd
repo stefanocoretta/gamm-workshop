@@ -1043,9 +1043,11 @@ sha_gam <- bam(
 
 ---
 
+.medium[
 ```{r sha-gam-sum}
 summary(sha_gam)
 ```
+]
 
 ---
 
