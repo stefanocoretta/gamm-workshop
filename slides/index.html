@@ -586,6 +586,18 @@ get_difference(rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingua
 
 ---
 
+### Reporting
+
+Generalised additive mixed models were fitted with mgcv v1.8-26 (Wood 2011; Wood 2017). The smooths used thin plate regression splines as basis (Wood 2003). The ordered factor difference smooths method described in Sóskuthy (2017) and Wieling (2018) was used to model the effect of factor terms in GAMs.
+
+Logged reaction times were modelled with a GAMM with the following terms: a parametric term for the interaction of Group (monolingual and bilingual) and Structure (subject and object); a reference smooth over Trial; a difference smooth term over Trial with a by-Group/Structure interaction variable.
+
+According to the difference smooth plots, there is a significant difference in the effect of Trial on reaction times between bilingual and monolingual subjects in the Object condition. The difference is located along Trials 1 to 20 and about 28 to 38.
+There is also a significant difference in Trial effect in the bilingual group, between the Object and Subject condition, over trials 1 to about 35.
+Finally, there is a significant difference in effect of Trial on reaction times in the monolingual group, between Object and Subject, over trial 1 and 30.
+
+---
+
 layout: false
 layout: true
 
@@ -656,6 +668,36 @@ f0_gam &lt;- gam(
     ti(time_point) + ti(duration) + ti(time_point, duration),
   data = vowels
 )
+```
+
+
+---
+
+
+```r
+summary(f0_gam)
+```
+
+```
+## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## f0 ~ ti(time_point) + ti(duration) + ti(time_point, duration)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 169.2678     0.4522   374.3   &lt;2e-16
+## 
+## Approximate significance of smooth terms:
+##                           edf Ref.df       F  p-value
+## ti(time_point)          2.619  3.126   3.684   0.0113
+## ti(duration)            3.936  3.997 238.067  &lt; 2e-16
+## ti(time_point,duration) 1.852  2.288   8.946 8.71e-05
+## 
+## R-sq.(adj) =  0.0841   Deviance explained = 8.48%
+## GCV = 2191.3  Scale est. = 2189.4    n = 10705
 ```
 
 ---

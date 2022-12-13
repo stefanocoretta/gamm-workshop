@@ -605,6 +605,18 @@ get_difference(rt_gam, "Trial", list(Gr_St = c("monolingual.Object", "monolingua
 
 ---
 
+### Reporting
+
+Generalised additive mixed models were fitted with mgcv v1.8-26 (Wood 2011; Wood 2017). The smooths used thin plate regression splines as basis (Wood 2003). The ordered factor difference smooths method described in Sóskuthy (2017) and Wieling (2018) was used to model the effect of factor terms in GAMs.
+
+Logged reaction times were modelled with a GAMM with the following terms: a parametric term for the interaction of Group (monolingual and bilingual) and Structure (subject and object); a reference smooth over Trial; a difference smooth term over Trial with a by-Group/Structure interaction variable.
+
+According to the difference smooth plots, there is a significant difference in the effect of Trial on reaction times between bilingual and monolingual subjects in the Object condition. The difference is located along Trials 1 to 20 and about 28 to 38.
+There is also a significant difference in Trial effect in the bilingual group, between the Object and Subject condition, over trials 1 to about 35.
+Finally, there is a significant difference in effect of Trial on reaction times in the monolingual group, between Object and Subject, over trial 1 and 30.
+
+---
+
 layout: false
 layout: true
 
@@ -655,6 +667,13 @@ f0_gam <- gam(
     ti(time_point) + ti(duration) + ti(time_point, duration),
   data = vowels
 )
+```
+
+
+---
+
+```{r f0-gam-summ}
+summary(f0_gam)
 ```
 
 ---
